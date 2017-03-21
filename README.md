@@ -44,10 +44,10 @@ not required and it carries NO bonus points. A simple text-oriented menu with di
 enough for this project: a two level menu such that the higher level menu provides options for administrators
 login and normal user login. The lower level menu provides different options for different users, depending
 on whether she is an administrator or he is a customer.
-You can develop your project on either unixs, class3 or Windows environments, but we will only test
+  You can develop your project on either unixs, class3 or Windows environments, but we will only test
 your code in unixs or class3 machine. So even though your code works in a windows environment, you
 should make sure it works on unixs or class3 before you submit your project.
-You need to design the SQL transactions appropriately and when necessary, use the concurrency control
+  You need to design the SQL transactions appropriately and when necessary, use the concurrency control
 mechanisms supported by Oracle (e.g., isolation level, locking modes) to make sure that inconsistent state
 will not occur. There are two situations that you should handle:
 * If the same user logs in and runs functions on two different terminals concurrently, the application
@@ -59,20 +59,23 @@ For example, the administrator updates the per share price of stock XYZ from $10
 while a customer is trying to buy 1 share for XYZ. If the customer’s balance is $10, then the system
 cannot record the purchase of 1 shares at $15.
 
-The objective of this project is to familiarize yourself with all the powerful features of SQL which include
+  The objective of this project is to familiarize yourself with all the powerful features of SQL which include
 functions, procedures and triggers. Recall that triggers and stored procedures can be used to make
 your code more efficient besides enforcing integrity constraints.
+
 Each interface is described as a set of functions. Many of which should be processed in an ”all or nothing”
 fashion. The functions are described as following:
 * Customer interface
-  – Browsing mutual funds
+    - Browsing mutual funds
 Customers are allowed to look at the list of all mutual funds or those in a category of their choice;
 they can also ask for funds to be sorted on the highest price for a given date, or alphabetically
 by fund name.
-  – Searching mutual fund by text
+
+    – Searching mutual fund by text
 Customers can specify up to two keywords; our system has to return the products that contain
 ALL these keywords in their mutual fund description.
-  – Investing
+
+    – Investing
 Customers may submit (deposit) an amount for investment, which is used to buy shares based on
 their allocation preference. Note that a ’deposit’ transaction triggers a set of ’buy’ transactions
 and this should be automated by a trigger defined in your database. Other implementations
@@ -81,13 +84,14 @@ mutual funds as specified in the allocation or none. Buying some is not an optio
 an amount is deposited and the new balance in the account is not sufficient to buy all the shares
 as specified in the allocation, that amount is just deposited in the account. In addition, any
 remaining amount after an investment becomes the new balance in the account.
-4
-– Selling shares
+
+    – Selling shares
 A customer may sell a number of shares of a mutual fund by providing its symbol and the
 number of shares. The resulting amount from the sell remains in the customers account as a
 balance which can be used for buying shares of another mutual fund. Note that the balance
 should be automatically updated by a trigger defined in your database.
-– Buying shares
+
+    – Buying shares
 A customer may buy a number of shares of a mutual fund by providing its symbol and the
 number of shares or by providing its symbol and the amount to be used in the trade. In both
 cases, the required amount should not exceed the balance in the customer’s account.
@@ -97,15 +101,18 @@ specified amount and the remaining amount remains in the balance. That this is n
 when you specify the number of shares to be bought. If the balance is not sufficient to buy all
 the shares, no share is bought. Also, the price of a share on a given day is the closing price of
 the most recent trading day, e.g., on a Monday will be the closing price of the previous Friday.
-– Conditional investment
+
+    – Conditional investment
 There are two kinds of condition. First, a customer may set up a date, so that on that date,
 certain investment action (invest/buy/sell) will be executed. Second, a customer may set up
 price condition for buy and sell. For example, buy certain amount of mutual fund if its price
 drops under certain point or sell some if the price rises above certain point. The conditional
 investment should be realized through triggers.
-– Changing the allocation preference
+
+    – Changing the allocation preference
 A customer may change his/her allocation preference.
-– Customer portfolio
+
+    – Customer portfolio
 This function generates a performance report of a customer portfolio. For a specific date, the
 report will list the mutual funds the customer owns shares of: their symbols, their prices, the
 number of shares, their current values on the specific date, the cost value and the yield as well
@@ -116,21 +123,25 @@ the specific date. The cost value of a stock is the total amount paid to purchas
 adjusted cost is the cost value minus the sum of all the sales of the given stock. Thus, the yield
 is the current value minus the adjusted cost. We define the total value of the portfolio to be the
 sum of the current value of the stocks owned by the customer.
-• Administrator interface
-– New customer registration
+
+* Administrator interface
+    – New customer registration
 Each new customer has to provide his/her name, address, email address, preferred login name
 and password. You should also specify whether the new user is an administrator or not. Your
 database should prevent two customers from selecting the same login name.
-– Updating share quotes for a day
+
+    – Updating share quotes for a day
 Update the price of each share of a mutual fund.
-– Adding new mutual fund.
+
+    – Adding new mutual fund.
 Add a new mutual fund.
-– Updating the time and date.
-5
-– Statistics
+
+    – Updating the time and date.
+    
+    – Statistics
 For the past x months, we want to know
-1. the top k highest volume categories (highest count of shares sold)
-2. the top k most investors (highest invested amount)
+    1. the top k highest volume categories (highest count of shares sold)
+    2. the top k most investors (highest invested amount)
 k should be an input parameter that can be specified by the users of your system.
 You must verify the login name and password of all users at the beginning. By default, we assume a preexisting
 administrator with a login name “admin” and a password “root”. This information can be inserted
