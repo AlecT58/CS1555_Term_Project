@@ -14,10 +14,13 @@ drop table MUTUALDATE cascade constraints;
 CREATE TABLE MUTUALFUND
 (
     symbol VARCHAR2(20) PRIMARY KEY,
-    name VARCHAR2(30),
+    name VARCHAR2(30) NOT NULL,
     description VARCHAR2(100),
     category VARCHAR2(10),
     c_date DATE
+
+    CONSTRAINT category_type 
+        CHECK (category IN ('fixed', 'bonds', 'stocks', 'mixed'))
 );
 
 CREATE TABLE CLOSINGPRICE
