@@ -13,23 +13,27 @@ drop table MUTUALDATE cascade constraints;
 
 CREATE TABLE MUTUALFUND
 (
-    symbol VARCHAR2(20) PRIMARY KEY,
+    symbol VARCHAR2(20),
     name VARCHAR2(30) NOT NULL,
     description VARCHAR2(100),
     category VARCHAR2(10),
     c_date DATE
 
+    CONSTRAINT mutual_pk 
+        PRIMARY KEY (symbol) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT category_type 
         CHECK (category IN ('fixed', 'bonds', 'stocks', 'mixed'))
+
 );
 
 CREATE TABLE CLOSINGPRICE
 (
     symbol VARCHAR2(20),
-    price FLOAT,
-    p_date DATE,
+    price FLOAT NOT NULL,
+    p_date DATE NOT NULL,
+
     CONSTRAINT closing_pk 
-        PRIMARY KEY (symbol, p_date),
+        PRIMARY KEY (symbol, p_date) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT closing_fk
         FOREIGN KEY (symbol) 
         REFERENCES MUTUALFUND (symbol)
@@ -37,21 +41,28 @@ CREATE TABLE CLOSINGPRICE
 
 CREATE TABLE CUSTOMER
 (
-    login VARCHAR2(10) PRIMARY KEY,
-    name VARCHAR2(20),
+    login VARCHAR2(10),
+    name VARCHAR2(20) NOT NULL,
     email VARCHAR2(30),
     address VARCHAR2(30),
-    password VARCHAR2(10),
-    balance FLOAT
+    password VARCHAR2(10) NOT NULL,
+    balance FLOAT,
+
+    CONSTRAINT customer_pk
+        PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
+    --does balance have to be  >=0? If so, make check statement
 );
 
 CREATE TABLE ADMINISTRATOR
 (
-    login VARCHAR2(10) PRIMARY KEY,
-    name VARCHAR2(20),
+    login VARCHAR2(10),
+    name VARCHAR2(20) NOT NULL,
     email VARCHAR2(30),
     address VARCHAR2(30),
     password VARCHAR2(10),
+
+    CONSTRAINT admin_pk
+        PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 CREATE TABLE ALLOCATION
@@ -64,7 +75,7 @@ CREATE TABLE ALLOCATION
         REFERENCES CUSTOMER (login)
 );
 
---Last 4 tables
+--Last 4 tables (NEEDS CONSTRAINTS)
 create table PREFERS (
 allocation_no integer;
 symbol varchar2(20),
@@ -107,3 +118,12 @@ constraint pk_mutualdate primary key (c_date)
 );
 
 COMMIT;
+
+--ADD INSERT STAEMENTS HERE
+
+COMMIT;
+
+--ADD TRIGGERS/VIEWS HERE
+
+COMMIT;
+PURGE RECYCLEBIN;
