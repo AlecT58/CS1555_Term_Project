@@ -215,8 +215,198 @@ VALUES (2, 'AS', .3);
 INSERT INTO PREFERS (allocation_no, symbol, percentage)
 VALUES (2, 'TMS', .4);
 
---Inserts into CLOSING PRICE
+--Inserts into CLOSINGPRICE
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 10, '28-MAR-14');
+	
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)		
+VALUES ('MM', 11, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 12, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 15, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 14, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 15, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('MM', 16, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 12, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 15, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 14, '31-MAR-14');                                       
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 16, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 17, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('RE', 15, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 9, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 10, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 12, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 14, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 10, '02-APR-14');  
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('STB', 12, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 12, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 13, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 15, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 12, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 9, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('LTB', 10, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 10, '28-MAR-14');
+	
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 11, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 14, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 18, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 13, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 15, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('BBS', 16, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 12, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 12, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 14, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 17, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 20, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('SRBS', 20, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 12, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 13, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 15, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 14, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 15, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('GS', 12, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 15, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 14, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 16, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 14, '01-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 17, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('AS', 18, '03-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 10, '28-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 12, '29-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 12, '30-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 14, '31-MAR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 13, '01-APR-14');  
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 12, '02-APR-14');
+
+INSERT INTO CLOSINGPRICE (symbol, price, p_date)
+VALUES ('IMS', 11, '03-APR-14'); 
+
 COMMIT;
+--END INSERT STATEMENTS
 
 --ADD TRIGGERS/VIEWS HERE
 
