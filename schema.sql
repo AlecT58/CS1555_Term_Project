@@ -180,7 +180,42 @@ VALUES (2, 'mike', 'RE', '29-MAR-14', 'buy', 50, 10, 500);
 INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
 VALUES (3, 'mike', 'RE', '01-APR-14', 'sell', 50, 15, 750);
 
---Inserts into 
+--Inserts into ALLOCATION 
+INSERT INTO ALLOCATION (allocation_no, login, p_date)
+VALUES (0, 'mike', '28-MAR-14');
+
+INSERT INTO ALLOCATION (allocation_no, login, p_date)
+VALUES (1, 'mary', '29-MAR-14');
+
+INSERT INTO ALLOCATION (allocation_no, login, p_date)
+VALUES (2, 'mike', '03-MAR-14');
+
+--Inserts into PREFERS
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (0, 'MM', .5);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (0, 'RE', .5);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (1, 'STB', .2);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (1, 'LTB', .4);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (1, 'BBS', .4);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (2, 'GS', .3);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (2, 'AS', .3);
+
+INSERT INTO PREFERS (allocation_no, symbol, percentage)
+VALUES (2, 'TMS', .4);
+
+--Inserts into CLOSING PRICE
 COMMIT;
 
 --ADD TRIGGERS/VIEWS HERE
