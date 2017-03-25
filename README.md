@@ -44,10 +44,12 @@ not required and it carries NO bonus points. A simple text-oriented menu with di
 enough for this project: a two level menu such that the higher level menu provides options for administrators
 login and normal user login. The lower level menu provides different options for different users, depending
 on whether she is an administrator or he is a customer.
+  
   You can develop your project on either unixs, class3 or Windows environments, but we will only test
 your code in unixs or class3 machine. So even though your code works in a windows environment, you
 should make sure it works on unixs or class3 before you submit your project.
-  You need to design the SQL transactions appropriately and when necessary, use the concurrency control
+  
+  You need to design the **SQL transactions** appropriately and when necessary, use the concurrency control
 mechanisms supported by Oracle (e.g., isolation level, locking modes) to make sure that inconsistent state
 will not occur. There are two situations that you should handle:
 * If the same user logs in and runs functions on two different terminals concurrently, the application
@@ -66,7 +68,8 @@ your code more efficient besides enforcing integrity constraints.
 Each interface is described as a set of functions. Many of which should be processed in an ”all or nothing”
 fashion. The functions are described as following:
 * Customer interface
-    - Browsing mutual funds
+
+    -Browsing mutual funds
 Customers are allowed to look at the list of all mutual funds or those in a category of their choice;
 they can also ask for funds to be sorted on the highest price for a given date, or alphabetically
 by fund name.
@@ -143,7 +146,19 @@ For the past x months, we want to know
     1. the top k highest volume categories (highest count of shares sold)
     2. the top k most investors (highest invested amount)
 k should be an input parameter that can be specified by the users of your system.
+
 You must verify the login name and password of all users at the beginning. By default, we assume a preexisting
 administrator with a login name “admin” and a password “root”. This information can be inserted
 into your table after you create the database. You can add yourselves as the first customers.
 
+### Milestone 3: Bringing it all together
+The primary task for this phase is to create a Java driver program to demonstrate the correctness of your
+BetterFuture backend by calling all of the above functions. It may prove quite handy to write this driver as
+you develop the functions as a way to test them. Your driver should also include a benchmark feature that
+stress the stability of your system buy calling each function automatically for multiple time with reasonably
+large amount of data and display corresponding results each time a function is being called.
+
+Now this may not seem like a lot for a third milestone (especially since it is stated that you may want
+to do this work alongside Milestone 2). The reasoning for this is to allow you to focus on incorporating
+feedback from the TA regarding Milestones 1 and 2 into your project as part of Milestone 3. This will be
+the primary focus of Milestone 3.
