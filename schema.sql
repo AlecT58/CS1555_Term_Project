@@ -17,7 +17,7 @@ CREATE TABLE MUTUALFUND
     name VARCHAR2(30) NOT NULL,
     description VARCHAR2(100),
     category VARCHAR2(10),
-    c_date DATE
+    c_date DATE,
 
     CONSTRAINT mutual_pk 
         PRIMARY KEY (symbol) INITIALLY IMMEDIATE DEFERRABLE,
@@ -46,7 +46,7 @@ CREATE TABLE CUSTOMER
     email VARCHAR2(30),
     address VARCHAR2(30),
     password VARCHAR2(10) NOT NULL,
-    balance FLOAT,
+    balance FLOAT NOT NULL,
 
     CONSTRAINT customer_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
@@ -79,7 +79,7 @@ CREATE TABLE ALLOCATION
 create table PREFERS (
 allocation_no integer;
 symbol varchar2(20),
-percentage float,
+percentage float NOT NULL,
 constraint pk_prefers primary key(allocation_no, symbol),
 constraint fk_prefers_alloc_no foreign key (allocation_no)
     references ALLOCATION (allocation_no)
@@ -89,11 +89,11 @@ create table TRXLOG (
 trans_id integer,
 login varchar2(10),
 symbol varchar2(20),
-t_date date,
-action varchar2(10),
+t_date date NOT NULL,
+action varchar2(10) NOT NULL,
 num_shares integer,
 price float,
-amount float,
+amount float NOT NULL,
 constraint pk_trxlog primary key (trans_id),
 constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login),
@@ -409,6 +409,19 @@ COMMIT;
 --END INSERT STATEMENTS
 
 --ADD TRIGGERS/VIEWS HERE
+
+
+Create or replace trigger OnDepositTrx
+After INSERT
+On TRXLOG
+For Each Row
+Begin
+	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
+	where symbol = symbol -- idea is here. will do later
+	
+	
+End
+/
 
 COMMIT;
 PURGE RECYCLEBIN;
