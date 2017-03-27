@@ -1,3 +1,9 @@
+/*
+    Alec Trievel and John Ha
+    CS 1555 Spring 2017
+    Term Project: Stage 1
+*/
+
 --Drop Tables for consistency--
 drop table MUTUALFUND cascade constraints;
 drop table CLOSINGPRICE cascade constraints;
@@ -9,8 +15,9 @@ drop table TRXLOG cascade constraints;
 drop table OWNS cascade constraints;
 drop table MUTUALDATE cascade constraints;
 
---START CREATE TABLES
---First 5 tables from part 1
+-------------------------------------------------------------------------------
+                        --START CREATE TABLES--
+-------------------------------------------------------------------------------
 CREATE TABLE MUTUALFUND
 (
     symbol VARCHAR2(20),
@@ -36,7 +43,7 @@ CREATE TABLE CLOSINGPRICE
         PRIMARY KEY (symbol, p_date) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT closing_fk
         FOREIGN KEY (symbol) 
-        REFERENCES MUTUALFUND (symbol)
+        REFERENCES MUTUALFUND (symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 CREATE TABLE CUSTOMER
@@ -50,7 +57,8 @@ CREATE TABLE CUSTOMER
 
     CONSTRAINT customer_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
-    --does balance have to be  >=0? If so, make check statement
+    CONSTRAINT balance_not_negative     --might be better to use a trigger instead, updates will cause issues too
+        CHECK (balance >= 0)
 );
 
 CREATE TABLE ADMINISTRATOR
@@ -59,7 +67,7 @@ CREATE TABLE ADMINISTRATOR
     name VARCHAR2(20) NOT NULL,
     email VARCHAR2(30),
     address VARCHAR2(30),
-    password VARCHAR2(10),
+    password VARCHAR2(10) NOT NULL, --everyone needs a password, make not null -Alec
 
     CONSTRAINT admin_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
@@ -67,59 +75,69 @@ CREATE TABLE ADMINISTRATOR
 
 CREATE TABLE ALLOCATION
 (
-    allocation_no INT PRIMARY KEY,
-    symbol VARCHAR2(20),
-    percentage FLOAT,
+    allocation_no INT,
+    login VARCHAR2(20) NOT NULL,
+    p_date DATE,
+
+    CONSTRAINT allocation_pk
+        PRIMARY KEY (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT allocation_fk
         FOREIGN KEY (login)
-        REFERENCES CUSTOMER (login)
+        REFERENCES CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE
 );
 
---Last 4 tables (NEEDS CONSTRAINTS)
 create table PREFERS (
 allocation_no integer;
-symbol varchar2(20),
-percentage float NOT NULL,
-constraint pk_prefers primary key(allocation_no, symbol),
+symbol varchar2(20) NOT NULL,
+percentage float,
+
+constraint pk_prefers primary key(allocation_no, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_prefers_alloc_no foreign key (allocation_no)
-    references ALLOCATION (allocation_no)
+    references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table TRXLOG (
 trans_id integer,
 login varchar2(10),
 symbol varchar2(20),
-t_date date NOT NULL,
-action varchar2(10) NOT NULL,
+t_date date,
+action varchar2(10) NOT NULL, --maybe set a constraint instead of not null? They can still enter an invalid value -Alec
 num_shares integer,
 price float,
 amount float NOT NULL,
-constraint pk_trxlog primary key (trans_id),
+
+constraint pk_trxlog primary key (trans_id) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_login foreign key (login)
-	references CUSTOMER (login),
+	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_symbol foreign key (symbol)
-	references MUTUALFUND(symbol)
+	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table OWNS (
 login varchar2(10),
 symbol varchar2(20),
-shares integer,
-constraint pk_owns primary key (login, symbol),
+shares integer NOT NULL,
+
+constraint pk_owns primary key (login, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_owns_login foreign key (login)
-	references CUSTOMER (login),
+	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_owns_symbol foreign key (symbol)
-	references MUTUALFUND(symbol)
+	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table MUTUALDATE (
 c_date date,
-constraint pk_mutualdate primary key (c_date)
+constraint pk_mutualdate primary key (c_date) INITIALLY IMMEDIATE DEFERRABLE
 );
---END CREATE TABLES
-COMMIT;
 
---START INSERT STAEMEMENTS
+COMMIT;
+-------------------------------------------------------------------------------
+                          --END CREATE TABLES--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                        --START INSERT STATEMENTS--
+-------------------------------------------------------------------------------
 --Inserts for MUTUALDATE
 INSERT INTO MUTUALDATE (c_date)
 VALUES ('04-APR-14');
@@ -406,13 +424,15 @@ INSERT INTO CLOSINGPRICE (symbol, price, p_date)
 VALUES ('IMS', 11, '03-APR-14'); 
 
 COMMIT;
---END INSERT STATEMENTS
+-------------------------------------------------------------------------------
+                            --END INSERT STAEMENTS--
+-------------------------------------------------------------------------------
 
---ADD TRIGGERS/VIEWS HERE
-
-
+-------------------------------------------------------------------------------
+                            --START TRIGGER CREATION--
+-------------------------------------------------------------------------------
 Create or replace trigger OnDepositTrx
-After INSERT
+After INSERT    --should fire before because we don't want to add bad data -Alec
 On TRXLOG
 For Each Row
 Begin
@@ -423,5 +443,60 @@ Begin
 End
 /
 
+--Trigger that will make sure the balance will be updated properly after buying or selling
+CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
+    BEFORE INSERT
+    ON TRXLOG
+    FOR EACH ROW   
+    BEGIN
+        --selling shares, need to subtract from balance; buying shares, add to balace
+        IF :new.action LIKE 'sell' THEN --PROCEDURE to update balance needs to go here
+        END IF;
+        IF :new.action LIKE 'buy' THEN --PROCEDURE to update balance needs to go here
+END;
+/
+
+COMMIT;
+-------------------------------------------------------------------------------
+                            --END TRIGGER CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START VIEW CREATION--
+-------------------------------------------------------------------------------
+--NOTE: I don't think any of our views need to be materialized since the base tables
+--      shouldn't recieve updates too often.
+
+--will hold the number of shares sold (aka have been bought)
+CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
+    AS SELECT symbol, category, num_shares, t_date
+    FROM TRXLOG NATURAL JOIN MUTUALFUND     --no repeats
+    WHERE action = 'buy';
+
+--will hold the info about specific mutual funds, see "Browsing Mutual Funds"
+CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
+    AS SELECT symbol, name, description, category, price, p_date
+    FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
+
+--will hold the user's portfolio inforamtion, see "Customer Portfolio"
+CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
+    AS SELECT a.login, a.symbol, a.price, a.shares, --need way to get non null values for cost and sales
+    FROM 
+        (SELECT * FROM OWNS NATURAL JOIN RecentPrice) a
+        LEFT JOIN 
+            --will do this later
+-------------------------------------------------------------------------------
+                            --END VIEW CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                        --START PROCEDURE/FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                        --END PROCEDURE/FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+--Last commit for good measure, purge recyclebin as well
 COMMIT;
 PURGE RECYCLEBIN;
