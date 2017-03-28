@@ -30,7 +30,6 @@ CREATE TABLE MUTUALFUND
         PRIMARY KEY (symbol) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT category_type 
         CHECK (category IN ('fixed', 'bonds', 'stocks', 'mixed'))
-
 );
 
 CREATE TABLE CLOSINGPRICE
@@ -57,8 +56,8 @@ CREATE TABLE CUSTOMER
 
     CONSTRAINT customer_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
-    CONSTRAINT balance_not_negative     --might be better to use a trigger instead, updates will cause issues too
-        CHECK (balance >= 0)
+    --CONSTRAINT balance_not_negative     --might be better to use a trigger instead, updates will cause issues too
+        --CHECK (balance >= 0)
 );
 
 CREATE TABLE ADMINISTRATOR
@@ -93,12 +92,15 @@ percentage float,
 
 constraint pk_prefers primary key(allocation_no, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_prefers_alloc_no foreign key (allocation_no)
-    references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE
+    references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
+CONSTRAINT fk_prefers_symbol
+    FOREIGN KEY (symbol)
+    REFERENCES MUTUALFUN(symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table TRXLOG (
 trans_id integer,
-login varchar2(10),
+login varchar2(10) NOT NULL, --needs to be a user doing the transaction
 symbol varchar2(20),
 t_date date,
 action varchar2(10) NOT NULL, --maybe set a constraint instead of not null? They can still enter an invalid value -Alec
@@ -115,7 +117,7 @@ constraint fk_trxlog_symbol foreign key (symbol)
 
 create table OWNS (
 login varchar2(10),
-symbol varchar2(20),
+symbol varchar2(20) NOT NULL,
 shares integer NOT NULL,
 
 constraint pk_owns primary key (login, symbol) INITIALLY IMMEDIATE DEFERRABLE,
@@ -425,7 +427,7 @@ VALUES ('IMS', 11, '03-APR-14');
 
 COMMIT;
 -------------------------------------------------------------------------------
-                            --END INSERT STAEMENTS--
+                            --END INSERT STATEMENTS--
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -440,7 +442,7 @@ Begin
 	where symbol = symbol -- idea is here. will do later
 	
 	
-End
+End;
 /
 
 --Trigger that will make sure the balance will be updated properly after buying or selling
@@ -459,6 +461,22 @@ END;
 COMMIT;
 -------------------------------------------------------------------------------
                             --END TRIGGER CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --END PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --END FUNCTION CREATION--
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -485,16 +503,13 @@ CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
         (SELECT * FROM OWNS NATURAL JOIN RecentPrice) a
         LEFT JOIN 
             --will do this later
+
+--get the total amount of sales for a user and the respective symbol 
+CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
+    AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
+    FROM TRXLOG WHERE action = 'sell' GROUP BY symbol, login;
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                        --START PROCEDURE/FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                        --END PROCEDURE/FUNCTION CREATION--
 -------------------------------------------------------------------------------
 
 --Last commit for good measure, purge recyclebin as well
