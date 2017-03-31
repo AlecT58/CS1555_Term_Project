@@ -5,15 +5,15 @@
 */
 
 --Drop Tables for consistency--
-drop table MUTUALFUND cascade constraints;
-drop table CLOSINGPRICE cascade constraints;
-drop table CUSTOMER cascade constraints;
-drop table ADMINISTRATOR cascade constraints;
-drop table ALLOCATION cascade constraints;
-drop table PREFERS cascade constraints;
-drop table TRXLOG cascade constraints;
-drop table OWNS cascade constraints;
-drop table MUTUALDATE cascade constraints;
+DROP TABLE MUTUALFUND CASCADE CONSTRAINTS;
+DROP TABLE CLOSINGPRICE CASCADE CONSTRAINTS;
+DROP TABLE CUSTOMER CASCADE CONSTRAINTS;
+DROP TABLE ADMINISTRATOR CASCADE CONSTRAINTS;
+DROP TABLE ALLOCATION CASCADE CONSTRAINTS;
+DROP TABLE PREFERS CASCADE CONSTRAINTS;
+DROP TABLE TRXLOG CASCADE CONSTRAINTS;
+DROP TABLE OWNS CASCADE CONSTRAINTS;
+DROP TABLE MUTUALDATE CASCADE CONSTRAINTS;
 
 -------------------------------------------------------------------------------
                         --START CREATE TABLES--
@@ -85,7 +85,8 @@ CREATE TABLE ALLOCATION
         REFERENCES CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE
 );
 
-create table PREFERS (
+create table PREFERS 
+(
 allocation_no integer;
 symbol varchar2(20) NOT NULL,
 percentage float,
@@ -434,7 +435,7 @@ COMMIT;
                             --START TRIGGER CREATION--
 -------------------------------------------------------------------------------
 Create or replace trigger OnDepositTrx
-After INSERT    --should fire before because we don't want to add bad data -Alec
+BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
 On TRXLOG
 For Each Row
 Begin
@@ -483,7 +484,7 @@ COMMIT;
                             --START VIEW CREATION--
 -------------------------------------------------------------------------------
 --NOTE: I don't think any of our views need to be materialized since the base tables
---      shouldn't recieve updates too often.
+--      shouldn't recieve updates too often. -Alec
 
 --will hold the number of shares sold (aka have been bought)
 CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
@@ -495,7 +496,7 @@ CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
 CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
     AS SELECT symbol, name, description, category, price, p_date
     FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
-
+/*
 --will hold the user's portfolio inforamtion, see "Customer Portfolio"
 CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
     AS SELECT a.login, a.symbol, a.price, a.shares, --need way to get non null values for cost and sales
@@ -503,11 +504,34 @@ CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
         (SELECT * FROM OWNS NATURAL JOIN RecentPrice) a
         LEFT JOIN 
             --will do this later
+*/
 
 --get the total amount of sales for a user and the respective symbol 
 CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
     AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
-    FROM TRXLOG WHERE action = 'sell' GROUP BY symbol, login;
+    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
+
+--get the costs of the total amount of shares per login and symbol
+CREATE OR REPLACE VIEW COST_BY_SHARE
+    AS SELECT login, symbol, SUM(amount) AS Amount_Per_Group
+    FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
+
+CREATE OR REPLACE VIEW MAX_TRANSACTIONS
+    AS SELECT MAX(trans_id) --does this need to be renamed? -Alec
+    FROM TRXLOG;
+
+CREATE OR REPLACE VIEW MAX_ALLOCATIONS
+    AS SELECT MAX(allocation_no) --does this need to be renamed? -Alec
+    FROM ALLOCATION;
+
+--get the most recent set of allocations for a specific user
+CREATE OR REPLACE VIEW RECENT_ALLOCATIONS
+    AS SELECT login, MAX(allocation_no) 
+    FROM ALLOCATION GROUP BY login;
+
+--Still need a view for getting the most recent prices -Alec
+
+
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
 -------------------------------------------------------------------------------
