@@ -456,7 +456,7 @@ CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
         IF :new.action LIKE 'sell' THEN --PROCEDURE to update balance needs to go here
         END IF;
         IF :new.action LIKE 'buy' THEN --PROCEDURE to update balance needs to go here
-END;
+    END;
 /
 
 COMMIT;
@@ -467,7 +467,36 @@ COMMIT;
 -------------------------------------------------------------------------------
                             --START PROCEDURE CREATION--
 -------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance - amountToSubtract
+            WHERE login = customerID;
+    END;
+/
 
+CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance + amountToAdd
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
+    AS
+    BEGIN
+        RETURN(numSHares * sharePrice);
+    END:
+/
+
+CREATE OR REPLACE PROCEDURE insertTransaction(buyOrDeposit IN VARCHAR2, customerId IN VARCHAR2, )
 -------------------------------------------------------------------------------
                             --END PROCEDURE CREATION--
 -------------------------------------------------------------------------------
