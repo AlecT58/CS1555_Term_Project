@@ -25,7 +25,6 @@ CREATE TABLE MUTUALFUND
     description VARCHAR2(100),
     category VARCHAR2(10),
     c_date DATE,
-
     CONSTRAINT mutual_pk 
         PRIMARY KEY (symbol) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT category_type 
@@ -37,7 +36,6 @@ CREATE TABLE CLOSINGPRICE
     symbol VARCHAR2(20),
     price FLOAT NOT NULL,
     p_date DATE NOT NULL,
-
     CONSTRAINT closing_pk 
         PRIMARY KEY (symbol, p_date) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT closing_fk
@@ -53,7 +51,6 @@ CREATE TABLE CUSTOMER
     address VARCHAR2(30),
     password VARCHAR2(10) NOT NULL,
     balance FLOAT NOT NULL,
-
     CONSTRAINT customer_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
     --CONSTRAINT balance_not_negative     --might be better to use a trigger instead, updates will cause issues too
@@ -67,7 +64,6 @@ CREATE TABLE ADMINISTRATOR
     email VARCHAR2(30),
     address VARCHAR2(30),
     password VARCHAR2(10) NOT NULL, --everyone needs a password, make not null -Alec
-
     CONSTRAINT admin_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
 );
@@ -77,7 +73,6 @@ CREATE TABLE ALLOCATION
     allocation_no INT,
     login VARCHAR2(20) NOT NULL,
     p_date DATE,
-
     CONSTRAINT allocation_pk
         PRIMARY KEY (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT allocation_fk
@@ -87,16 +82,15 @@ CREATE TABLE ALLOCATION
 
 create table PREFERS 
 (
-allocation_no integer;
+allocation_no integer,
 symbol varchar2(20) NOT NULL,
 percentage float,
-
 constraint pk_prefers primary key(allocation_no, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_prefers_alloc_no foreign key (allocation_no)
     references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
 CONSTRAINT fk_prefers_symbol
     FOREIGN KEY (symbol)
-    REFERENCES MUTUALFUN(symbol) INITIALLY IMMEDIATE DEFERRABLE
+    REFERENCES MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table TRXLOG (
@@ -108,7 +102,6 @@ action varchar2(10) NOT NULL, --maybe set a constraint instead of not null? They
 num_shares integer,
 price float,
 amount float NOT NULL,
-
 constraint pk_trxlog primary key (trans_id) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
@@ -120,7 +113,6 @@ create table OWNS (
 login varchar2(10),
 symbol varchar2(20) NOT NULL,
 shares integer NOT NULL,
-
 constraint pk_owns primary key (login, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_owns_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
@@ -189,16 +181,16 @@ INSERT INTO OWNS (login, symbol, shares)
 VALUES ('mike', 'RE', 50);
 
 --Inserts into TRXLOG
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (0, 'mike', NULL, '29-MAR-14', 'deposit', NULL, NULL, 1000);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (1, 'mike', 'MM', '29-MAR-14', 'buy', 50, 10, 500);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (2, 'mike', 'RE', '29-MAR-14', 'buy', 50, 10, 500);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (3, 'mike', 'RE', '01-APR-14', 'sell', 50, 15, 750);
 
 --Inserts into ALLOCATION 
@@ -432,6 +424,62 @@ COMMIT;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
+                            --START VIEW CREATION--
+-------------------------------------------------------------------------------
+--NOTE: I don't think any of our views need to be materialized since the base tables
+--      shouldn't recieve updates too often. -Alec
+
+--will hold the number of shares sold (aka have been bought)
+CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
+    AS SELECT symbol, category, num_shares, t_date
+    FROM TRXLOG NATURAL JOIN MUTUALFUND     --no repeats
+    WHERE action = 'buy';
+
+--will hold the info about specific mutual funds, see "Browsing Mutual Funds"
+CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
+    AS SELECT symbol, name, description, category, price, p_date
+    FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
+
+/*
+--will hold the user's portfolio inforamtion, see "Customer Portfolio"
+CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
+    AS SELECT a.login, a.symbol, a.price, a.shares, --need way to get non null values for cost and sales
+    FROM 
+        (SELECT * FROM OWNS NATURAL JOIN RecentPrice) a
+        LEFT JOIN 
+            --will do this later
+*/
+
+--get the total amount of sales for a user and the respective symbol 
+CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
+    AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
+    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
+
+--get the costs of the total amount of shares per login and symbol
+CREATE OR REPLACE VIEW COST_BY_SHARE
+    AS SELECT login, symbol, SUM(amount) AS Amount_Per_Group
+    FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
+
+CREATE OR REPLACE VIEW MAX_TRANSACTIONS
+    AS SELECT MAX(trans_id) AS Trans_ID_Order
+    FROM TRXLOG;
+
+CREATE OR REPLACE VIEW MAX_ALLOCATIONS
+    AS SELECT MAX(allocation_no) AS Allocation_No_Order
+    FROM ALLOCATION;
+
+--get the most recent set of allocations for a specific user
+CREATE OR REPLACE VIEW RECENT_ALLOCATIONS
+    AS SELECT login, MAX(allocation_no) AS Allocation_No_Order
+    FROM ALLOCATION GROUP BY login;
+
+--Still need a view for getting the most recent prices and need to finish our portfolio view -Alec
+
+-------------------------------------------------------------------------------
+                            --END VIEW CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
                             --START TRIGGER CREATION--
 -------------------------------------------------------------------------------
 Create or replace trigger OnDepositTrx
@@ -465,7 +513,7 @@ COMMIT;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
-                            --START PROCEDURE CREATION--
+                        --START PROCEDURE/FUNCTION CREATION--
 -------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
     AS Old_Balance FLOAT;
@@ -492,77 +540,20 @@ CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN 
 CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
     AS
     BEGIN
-        RETURN(numSHares * sharePrice);
-    END:
+        RETURN(numShares * sharePrice);
+    END;
 /
 
-CREATE OR REPLACE PROCEDURE insertTransaction(buyOrDeposit IN VARCHAR2, customerId IN VARCHAR2, )
+CREATE OR REPLACE PROCEDURE insertNewDeposit(customerID IN VARCHAR2, amountDeposit IN FLOAT)
+    AS ID number;
+    BEGIN
+        SELECT MAX(trans_id) INTO ID --highest ID == 1 less than our new ID
+        FROM TRXLOG;
+        INSERT INTO TRXLOG VALUES(ID + 1, customerID, NULL, current_date, 'deposit', NULL, NULL, amountDeposit);
+    END;
+/
 -------------------------------------------------------------------------------
-                            --END PROCEDURE CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --START FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --END FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --START VIEW CREATION--
--------------------------------------------------------------------------------
---NOTE: I don't think any of our views need to be materialized since the base tables
---      shouldn't recieve updates too often. -Alec
-
---will hold the number of shares sold (aka have been bought)
-CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
-    AS SELECT symbol, category, num_shares, t_date
-    FROM TRXLOG NATURAL JOIN MUTUALFUND     --no repeats
-    WHERE action = 'buy';
-
---will hold the info about specific mutual funds, see "Browsing Mutual Funds"
-CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
-    AS SELECT symbol, name, description, category, price, p_date
-    FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
-/*
---will hold the user's portfolio inforamtion, see "Customer Portfolio"
-CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
-    AS SELECT a.login, a.symbol, a.price, a.shares, --need way to get non null values for cost and sales
-    FROM 
-        (SELECT * FROM OWNS NATURAL JOIN RecentPrice) a
-        LEFT JOIN 
-            --will do this later
-*/
-
---get the total amount of sales for a user and the respective symbol 
-CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
-    AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
-    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
-
---get the costs of the total amount of shares per login and symbol
-CREATE OR REPLACE VIEW COST_BY_SHARE
-    AS SELECT login, symbol, SUM(amount) AS Amount_Per_Group
-    FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
-
-CREATE OR REPLACE VIEW MAX_TRANSACTIONS
-    AS SELECT MAX(trans_id) --does this need to be renamed? -Alec
-    FROM TRXLOG;
-
-CREATE OR REPLACE VIEW MAX_ALLOCATIONS
-    AS SELECT MAX(allocation_no) --does this need to be renamed? -Alec
-    FROM ALLOCATION;
-
---get the most recent set of allocations for a specific user
-CREATE OR REPLACE VIEW RECENT_ALLOCATIONS
-    AS SELECT login, MAX(allocation_no) 
-    FROM ALLOCATION GROUP BY login;
-
---Still need a view for getting the most recent prices -Alec
-
-
--------------------------------------------------------------------------------
-                            --END VIEW CREATION--
+                        --END PROCEDURE/FUNCTION CREATION--
 -------------------------------------------------------------------------------
 
 --Last commit for good measure, purge recyclebin as well
