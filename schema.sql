@@ -113,6 +113,8 @@ constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_symbol foreign key (symbol)
 	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
+constraint action_type
+	check (action in ('deposit', 'sell', 'buy'))
 );
 
 create table OWNS (
@@ -508,6 +510,9 @@ CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
 CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
     AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
     FROM TRXLOG WHERE action = 'sell' GROUP BY symbol, login;
+	
+	
+
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
 -------------------------------------------------------------------------------
