@@ -558,11 +558,11 @@ CREATE OR REPLACE VIEW COST_BY_SHARE
     FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
 
 CREATE OR REPLACE VIEW MAX_TRANSACTIONS
-    AS SELECT MAX(trans_id) AS Max_Trans --does this need to be renamed? -Alec
+    AS SELECT MAX(trans_id) AS Max_Trans 
     FROM TRXLOG;
 
 CREATE OR REPLACE VIEW MAX_ALLOCATIONS
-    AS SELECT MAX(allocation_no) AS Max_Alloc --does this need to be renamed? -Alec
+    AS SELECT MAX(allocation_no) AS Max_Alloc 
     FROM ALLOCATION;
 
 --get the most recent set of allocations for a specific user
