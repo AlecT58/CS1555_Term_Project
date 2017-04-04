@@ -3,6 +3,7 @@
     CS 1555 Spring 2017
     Term Project: Stage 1
 */
+set sqlblanklines on
 
 --Drop Tables for consistency--
 DROP TABLE MUTUALFUND CASCADE CONSTRAINTS;
@@ -106,7 +107,9 @@ constraint pk_trxlog primary key (trans_id) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_symbol foreign key (symbol)
-	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
+	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE,
+constraint action_type
+	check (action in ('deposit', 'sell', 'buy'))
 );
 
 create table OWNS (
@@ -424,6 +427,92 @@ COMMIT;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
+                            --START TRIGGER CREATION--
+-------------------------------------------------------------------------------
+
+--Currently has a compilation error on unix
+Create or replace trigger OnDepositTrx
+BEFORE INSERT    
+On TRXLOG
+For Each Row
+Begin
+	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
+	where symbol = symbol -- idea is here. will do later
+	
+	
+End;
+/
+
+--Trigger that will make sure the balance will be updated properly after buying or selling
+--Currently has a compilation error on unix
+CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
+    BEFORE INSERT
+    ON TRXLOG
+    FOR EACH ROW   
+    BEGIN
+        --selling shares, need to subtract from balance; buying shares, add to balace
+        IF :new.action LIKE 'sell' THEN --PROCEDURE to update balance needs to go here
+        END IF;
+        IF :new.action LIKE 'buy' THEN --PROCEDURE to update balance needs to go here
+    END;
+/
+
+COMMIT;
+-------------------------------------------------------------------------------
+                            --END TRIGGER CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance - amountToSubtract
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance + amountToAdd
+            WHERE login = customerID;
+    END;
+/
+
+
+--Currently has a compilation error on unix
+CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
+    AS
+    BEGIN
+        RETURN(numShares * sharePrice);
+    END:
+/
+
+--Currently has a compilation error on unix
+CREATE OR REPLACE PROCEDURE insertTransaction(buyOrDeposit IN VARCHAR2, customerId IN VARCHAR2, )
+
+/
+-------------------------------------------------------------------------------
+                            --END PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --END FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
                             --START VIEW CREATION--
 -------------------------------------------------------------------------------
 --NOTE: I don't think any of our views need to be materialized since the base tables
@@ -453,7 +542,8 @@ CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
 --get the total amount of sales for a user and the respective symbol 
 CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
     AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
-    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
+    FROM TRXLOG WHERE action = 'sell' GROUP BY symbol, login;
+
 
 --get the costs of the total amount of shares per login and symbol
 CREATE OR REPLACE VIEW COST_BY_SHARE
@@ -461,7 +551,7 @@ CREATE OR REPLACE VIEW COST_BY_SHARE
     FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
 
 CREATE OR REPLACE VIEW MAX_TRANSACTIONS
-    AS SELECT MAX(trans_id) AS Trans_ID_Order
+    AS SELECT MAX(trans_id) AS Max_Trans 
     FROM TRXLOG;
 
 CREATE OR REPLACE VIEW MAX_ALLOCATIONS
