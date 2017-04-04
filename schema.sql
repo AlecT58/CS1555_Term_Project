@@ -26,7 +26,6 @@ CREATE TABLE MUTUALFUND
     description VARCHAR2(100),
     category VARCHAR2(10),
     c_date DATE,
-
     CONSTRAINT mutual_pk 
         PRIMARY KEY (symbol) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT category_type 
@@ -38,7 +37,6 @@ CREATE TABLE CLOSINGPRICE
     symbol VARCHAR2(20),
     price FLOAT NOT NULL,
     p_date DATE NOT NULL,
-
     CONSTRAINT closing_pk 
         PRIMARY KEY (symbol, p_date) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT closing_fk
@@ -54,7 +52,6 @@ CREATE TABLE CUSTOMER
     address VARCHAR2(30),
     password VARCHAR2(10) NOT NULL,
     balance FLOAT NOT NULL,
-
     CONSTRAINT customer_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
     --CONSTRAINT balance_not_negative     --might be better to use a trigger instead, updates will cause issues too
@@ -68,7 +65,6 @@ CREATE TABLE ADMINISTRATOR
     email VARCHAR2(30),
     address VARCHAR2(30),
     password VARCHAR2(10) NOT NULL, --everyone needs a password, make not null -Alec
-
     CONSTRAINT admin_pk
         PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
 );
@@ -78,7 +74,6 @@ CREATE TABLE ALLOCATION
     allocation_no INT,
     login VARCHAR2(20) NOT NULL,
     p_date DATE,
-
     CONSTRAINT allocation_pk
         PRIMARY KEY (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT allocation_fk
@@ -91,7 +86,6 @@ create table PREFERS
 allocation_no integer,
 symbol varchar2(20) NOT NULL,
 percentage float,
-
 constraint pk_prefers primary key(allocation_no, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_prefers_alloc_no foreign key (allocation_no)
     references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
@@ -109,7 +103,6 @@ action varchar2(10) NOT NULL, --maybe set a constraint instead of not null? They
 num_shares integer,
 price float,
 amount float NOT NULL,
-
 constraint pk_trxlog primary key (trans_id) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
@@ -123,7 +116,6 @@ create table OWNS (
 login varchar2(10),
 symbol varchar2(20) NOT NULL,
 shares integer NOT NULL,
-
 constraint pk_owns primary key (login, symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_owns_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
@@ -536,6 +528,7 @@ CREATE OR REPLACE VIEW SHARES_SOLD_VIEW
 CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
     AS SELECT symbol, name, description, category, price, p_date
     FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
+
 /*
 --will hold the user's portfolio inforamtion, see "Customer Portfolio"
 CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
@@ -562,19 +555,120 @@ CREATE OR REPLACE VIEW MAX_TRANSACTIONS
     FROM TRXLOG;
 
 CREATE OR REPLACE VIEW MAX_ALLOCATIONS
-    AS SELECT MAX(allocation_no) AS Max_Alloc 
+    AS SELECT MAX(allocation_no) AS Allocation_No_Order
     FROM ALLOCATION;
 
 --get the most recent set of allocations for a specific user
 CREATE OR REPLACE VIEW RECENT_ALLOCATIONS
-    AS SELECT login, MAX(allocation_no) AS Max_Alloc
+    AS SELECT login, MAX(allocation_no) AS Allocation_No_Order
     FROM ALLOCATION GROUP BY login;
 
---Still need a view for getting the most recent prices -Alec
-
+--Still need a view for getting the most recent prices and need to finish our portfolio view -Alec
 
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                        --START PROCEDURE/FUNCTION CREATION--
+-------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance - amountToSubtract
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT)
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance + amountToAdd
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
+    AS
+    BEGIN
+        RETURN(numShares * sharePrice);
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNewDeposit(customerID IN VARCHAR2, amountDeposit IN FLOAT)
+    AS ID NUMBER;
+    BEGIN
+        SELECT MAX(trans_id) INTO ID --highest ID == 1 less than our new ID
+        FROM TRXLOG;
+        INSERT INTO TRXLOG VALUES(ID + 1, customerID, NULL, current_date, 'deposit', NULL, NULL, amountDeposit);
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNewBuy(customerID IN VARCHAR2, symbol IN VARCHAR2, numShares IN NUMBER, sharePrice IN FLOAT)
+    AS total number;
+       ID number;
+    BEGIN
+        amount := getReturns(numShares, sharePrice);
+        SELECT MAX(trans_id) INTO ID --highest ID == 1 less than our new ID
+        FROM TRXLOG;
+        INSERT INTO TRXLOG VALUES(ID + 1, customerID, symbol, current_date, 'buy', numShares, sharePrice, amountDeposit);
+    END;
+/
+
+--Still need procedures to: buy a new transaction based on user input, 
+-------------------------------------------------------------------------------
+                        --END PROCEDURE/FUNCTION CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START TRIGGER CREATION--
+-------------------------------------------------------------------------------
+/*
+Create or replace trigger OnDepositTrx
+BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
+On TRXLOG
+For Each Row
+Begin
+	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
+	where symbol = symbol -- idea is here. will do later
+	
+	
+End;
+/
+*/
+
+--Trigger that will make sure the balance will be updated properly after buying or selling
+CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
+    BEFORE INSERT
+    ON TRXLOG
+    FOR EACH ROW   
+    BEGIN
+        --selling shares, need to subtract from balance; buying shares, add to balace
+        IF :new.action LIKE 'sell' addToBalance(:new.amount, :new.login); 
+        END IF;
+        IF :new.action LIKE 'buy' THEN THEN subtractFromBalance(:new.amount, :new.login); 
+    END;
+/
+/*
+CREATE OR REPLACE TRIGGER DEPOSIT_TRIG
+    BEFORE INSERT
+    ON TRXLOG
+    FOR EACH ROW
+    BEGIN
+        IF :new.action LIKE 'deposit' THEN --PROCEDURE TO BUY TRANSACTION GOES HERE
+        END IF;
+    END;
+/
+*/
+COMMIT;
+-------------------------------------------------------------------------------
+                            --END TRIGGER CREATION--
 -------------------------------------------------------------------------------
 
 --Last commit for good measure, purge recyclebin as well
