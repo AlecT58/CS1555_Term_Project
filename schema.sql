@@ -3,6 +3,7 @@
     CS 1555 Spring 2017
     Term Project: Stage 1
 */
+set sqlblanklines on
 
 --Drop Tables for consistency--
 DROP TABLE MUTUALFUND CASCADE CONSTRAINTS;
@@ -87,7 +88,7 @@ CREATE TABLE ALLOCATION
 
 create table PREFERS 
 (
-allocation_no integer;
+allocation_no integer,
 symbol varchar2(20) NOT NULL,
 percentage float,
 
@@ -96,7 +97,7 @@ constraint fk_prefers_alloc_no foreign key (allocation_no)
     references ALLOCATION (allocation_no) INITIALLY IMMEDIATE DEFERRABLE,
 CONSTRAINT fk_prefers_symbol
     FOREIGN KEY (symbol)
-    REFERENCES MUTUALFUN(symbol) INITIALLY IMMEDIATE DEFERRABLE
+    REFERENCES MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
 );
 
 create table TRXLOG (
@@ -113,7 +114,7 @@ constraint pk_trxlog primary key (trans_id) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_login foreign key (login)
 	references CUSTOMER (login) INITIALLY IMMEDIATE DEFERRABLE,
 constraint fk_trxlog_symbol foreign key (symbol)
-	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE
+	references MUTUALFUND(symbol) INITIALLY IMMEDIATE DEFERRABLE,
 constraint action_type
 	check (action in ('deposit', 'sell', 'buy'))
 );
@@ -191,16 +192,16 @@ INSERT INTO OWNS (login, symbol, shares)
 VALUES ('mike', 'RE', 50);
 
 --Inserts into TRXLOG
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (0, 'mike', NULL, '29-MAR-14', 'deposit', NULL, NULL, 1000);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (1, 'mike', 'MM', '29-MAR-14', 'buy', 50, 10, 500);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (2, 'mike', 'RE', '29-MAR-14', 'buy', 50, 10, 500);
 
-INSERT INTO TRXLOG (trans_id, login, t_date, action, num_shares, price, amount)
+INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount)
 VALUES (3, 'mike', 'RE', '01-APR-14', 'sell', 50, 15, 750);
 
 --Inserts into ALLOCATION 
@@ -436,8 +437,10 @@ COMMIT;
 -------------------------------------------------------------------------------
                             --START TRIGGER CREATION--
 -------------------------------------------------------------------------------
+
+--Currently has a compilation error on unix
 Create or replace trigger OnDepositTrx
-BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
+BEFORE INSERT    
 On TRXLOG
 For Each Row
 Begin
@@ -449,6 +452,7 @@ End;
 /
 
 --Trigger that will make sure the balance will be updated properly after buying or selling
+--Currently has a compilation error on unix
 CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
     BEFORE INSERT
     ON TRXLOG
@@ -491,14 +495,19 @@ CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN 
     END;
 /
 
+
+--Currently has a compilation error on unix
 CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
     AS
     BEGIN
-        RETURN(numSHares * sharePrice);
+        RETURN(numShares * sharePrice);
     END:
 /
 
+--Currently has a compilation error on unix
 CREATE OR REPLACE PROCEDURE insertTransaction(buyOrDeposit IN VARCHAR2, customerId IN VARCHAR2, )
+
+/
 -------------------------------------------------------------------------------
                             --END PROCEDURE CREATION--
 -------------------------------------------------------------------------------
@@ -540,12 +549,8 @@ CREATE OR REPLACE VIEW CUSTOMER_PORTFOLIO_VIEW
 --get the total amount of sales for a user and the respective symbol 
 CREATE OR REPLACE VIEW SOLD_TRANSACTIONS
     AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
-<<<<<<< HEAD
     FROM TRXLOG WHERE action = 'sell' GROUP BY symbol, login;
-	
-	
-=======
-    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
+
 
 --get the costs of the total amount of shares per login and symbol
 CREATE OR REPLACE VIEW COST_BY_SHARE
@@ -553,21 +558,20 @@ CREATE OR REPLACE VIEW COST_BY_SHARE
     FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
 
 CREATE OR REPLACE VIEW MAX_TRANSACTIONS
-    AS SELECT MAX(trans_id) --does this need to be renamed? -Alec
+    AS SELECT MAX(trans_id) AS Max_Trans --does this need to be renamed? -Alec
     FROM TRXLOG;
 
 CREATE OR REPLACE VIEW MAX_ALLOCATIONS
-    AS SELECT MAX(allocation_no) --does this need to be renamed? -Alec
+    AS SELECT MAX(allocation_no) AS Max_Alloc --does this need to be renamed? -Alec
     FROM ALLOCATION;
 
 --get the most recent set of allocations for a specific user
 CREATE OR REPLACE VIEW RECENT_ALLOCATIONS
-    AS SELECT login, MAX(allocation_no) 
+    AS SELECT login, MAX(allocation_no) AS Max_Alloc
     FROM ALLOCATION GROUP BY login;
 
 --Still need a view for getting the most recent prices -Alec
 
->>>>>>> refs/remotes/origin/master
 
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
