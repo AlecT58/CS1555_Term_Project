@@ -629,9 +629,9 @@ CREATE OR REPLACE PROCEDURE insertNewBuy(customerID IN VARCHAR2, symbol IN VARCH
 -------------------------------------------------------------------------------
                             --START TRIGGER CREATION--
 -------------------------------------------------------------------------------
-/*
+
 Create or replace trigger OnDepositTrx
-BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
+BEFORE INSERT   
 On TRXLOG
 For Each Row
 Begin
@@ -641,7 +641,7 @@ Begin
 	
 End;
 /
-*/
+*
 
 --Trigger that will make sure the balance will be updated properly after buying or selling
 CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG

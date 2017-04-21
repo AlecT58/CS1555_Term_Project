@@ -65,7 +65,7 @@ public class test_driver
             {
                 System.out.print("\nEnter your username: ");
                 userName = in.nextLine();
-                System.out.print("Enter your username: ");
+                System.out.print("Enter your password: ");
                 password = in.nextLine();
 
                 if(!checkLogin(admin, userName, password))
