@@ -1,7 +1,7 @@
 /*
     Alec Trievel and John Ha
     CS 1555 Spring 2017
-    Term Project: Stage 2
+    Term Project
 */
 
 import java.sql.*;
@@ -9,7 +9,7 @@ import java.util.*;
 import java.text.*;
 import java.sql.Date;
 
-public class test_driver
+public class driver_group7
 {
     static Connection connection; 
 	static Statement statement;
@@ -17,34 +17,33 @@ public class test_driver
 	static ResultSet resultSet2;
 	static PreparedStatement prepStatement;
 	static String query;
-	static SimpleDateFormat df;
+	static SimpleDateFormat dateformat = new SimpleDateFormat("dd-MMM-yyyy");
 
     public static void main(String[] args) throws SQLException 
     {
         String dbUsername = "abt22";
         String dbPassword = "3943128";
-        SimpleDateFormat currentDate = new SimpleDateFormat("dd-MMM-yyyy");
 
         try
         {
-            // DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
-            // String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-            // connection = DriverManager.getConnection(url, dbUsername, dbPassword); 
-            // statement = connection.createStatement();
-            // connection.setAutoCommit(false); 
-            // connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-
+            DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+            String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass";
+            connection = DriverManager.getConnection(url, dbUsername, dbPassword); 
+            statement = connection.createStatement();
+            connection.setAutoCommit(false); 
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 
             Scanner in = new Scanner(System.in);
             int userChoice = -1;
 
-            System.out.println("\t\tBETTER FUTURE ACCESS DATABASE SYSTEM");
+            System.out.println("\n\t\tBETTER FUTURE ACCESS DATABASE SYSTEM");
 
             while (userChoice == -1)
             {
                 System.out.println("Please select an option:\n1)USER LOGIN\n2)ADMIN LOGIN\n");
                 System.out.print("Your choice: ");
                 userChoice = in.nextInt();
+                in.nextLine();
 
                 if(userChoice < 1 || userChoice > 2)
                 {
@@ -65,7 +64,7 @@ public class test_driver
             {
                 System.out.print("\nEnter your username: ");
                 userName = in.nextLine();
-                System.out.print("Enter your username: ");
+                System.out.print("Enter your password: ");
                 password = in.nextLine();
 
                 if(!checkLogin(admin, userName, password))
@@ -104,26 +103,38 @@ public class test_driver
                         System.out.print("Your choice: ");
                         userChoice = in.nextInt();
 
+                        boolean updatedToday = false;
                         switch(userChoice)
                         {
                             case 0:
-                                System.out.println("\nExiting administrative options...");
+                                System.out.println("\nGood bye, " + userName + "!");
                                 start = false;
                                 break;
                             case 1:
-                                addUser();
+                                if(addUser())
+                                    System.out.println("\nNEW USER ADDED"); 
                                 break;
                             case 2:
-                                updatePrices();
+                                if(!updatedToday && updatePrices())
+                                {
+                                    System.out.println("\nPRICES UPDATED");
+                                    updatedToday = true;
+                                }
+                                else
+                                {
+                                    System.out.println("\nERROR. PRICES CAN ONLY BE UPDATED ONCE A DAY");  
+                                }
                                 break;
                             case 3:
-                                addFunds();
+                                if(addFunds())
+                                    System.out.println("\nNEW FUNDS ADDED"); 
                                 break;
                             case 4:
-                                updateTime();
+                                if(updateTime())
+                                    System.out.println("\nTIME UPDATED");      
                                 break;
                             case 5:
-                                viewStats();
+                                viewStats();        
                                 break;
                             default:
                                 System.out.println("Error. Invalid option. Please try again.");
@@ -146,29 +157,29 @@ public class test_driver
                         switch(userChoice)
                         {
                             case 0:
-                                System.out.println("\nExiting administrative options...");
+                                System.out.println("\nGood bye, " + userName + "!");
                                 start = false;
                                 break;
                             case 1:
-                                browseFunds();
+                                browseFunds();  //done
                                 break;
                             case 2:
-                                searchFunds();
+                                searchFunds();  //done
                                 break;
                             case 3:
-                                sellShares(userName);
+                                sellShares(userName);   //done
                                 break;
                             case 4:
-                                invest(userName);
+                                invest(userName);   //done
                                 break;
                             case 5:
-                                buyShares(userName);
+                                buyShares(userName);    //done
                                 break;
                             case 6:
-                                changePref(userName);
+                                changePref(userName);   //NOT DONE
                                 break;
                             case 7:
-                                viewPortfolio(userName);
+                                viewPortfolio(userName);    //done
                                 break;
                             default:
                                 System.out.println("Error. Invalid option. Please try again.");
@@ -183,7 +194,7 @@ public class test_driver
                     {
                         in.nextLine();
                     }
-                    System.out.println("\n\nThere was an error processing your request. Changes were rolled back to maintain structure. Please try again.");
+                    System.out.println("\n\nThere was an error processing your request. Changes were rolled-back to maintain structure and accuracy. Please try again.");
                     connection.rollback();
                 }
             }
@@ -199,31 +210,74 @@ public class test_driver
         }
     }
 
-    public static boolean checkLogin(boolean admin, String userName, String password) throws SQLException
-    {
-        if(admin)
-            query = "SELECT * FROM ADMINISTRATOR WHERE login = ? AND password = ?";
-		else
-			query = "SELECT * FROM CUSTOMER WHERE login = ? AND password = ?";
-		
-        prepStatement = connection.prepareStatement(query);
-        prepStatement.setString(1, userName);
-        prepStatement.setString(2, password);
-        resultSet = prepStatement.executeQuery();
-        while (resultSet.next())
-        {
-            if(resultSet.getString(1).equals(userName))
-                return true;
-        }
-        return false;
-    }
-
     /*
      * START ADMIN ONLY FUNCTIONS
      */
+     //done
     public static boolean addUser() throws SQLException
     {
-        return false;
+        Scanner in = new Scanner(System.in);
+
+        String username = "";
+        String password = "";
+        String name = "";
+        String address = "";
+        String email = "";
+        boolean admin = false;
+
+        System.out.println("\nYou will be prompted for the information for the new user. \nNote: If an entered value is longer in length than requested, it will be truncated.");
+        
+        System.out.print("Enter the username for the new user (20 characters): ");
+        username = in.nextLine();
+
+        if(!nameAvailable(username))
+        {
+            System.out.println("\nError. Username already in use. Please try another name.");
+            return false;
+        }
+
+        System.out.print("Enter the password for the new user (10 characters): ");
+        password = in.nextLine();
+
+        System.out.print("Is the new user an admin? (Y for yes, other for no): ");
+        if(in.nextLine().equalsIgnoreCase("Y"))
+            admin = true;
+
+        System.out.print("Enter the name for the new user (20 characters): ");
+        name = in.nextLine();
+
+        System.out.print("Enter the address for the new user (30 characters): ");
+        address = in.nextLine();
+
+        System.out.print("Enter the email for the new user (30 characters): ");
+        email = in.nextLine();
+
+        if(admin)
+        {
+            query = "insert into ADMINISTRATOR values (?,?,?,?,?)";
+            prepStatement = connection.prepareStatement(query);
+            prepStatement.setString(1, username); 
+            prepStatement.setString(2, name); 
+            prepStatement.setString(3, email); 
+            prepStatement.setString(4, address); 
+            prepStatement.setString(5, password); 
+            prepStatement.executeUpdate();
+        }
+        else
+        {
+            query = "insert into CUSTOMER values (?,?,?,?,?,?)";
+            prepStatement = connection.prepareStatement(query);
+            prepStatement.setString(1, username); 
+            prepStatement.setString(2, name); 
+            prepStatement.setString(3, email); 
+            prepStatement.setString(4, address); 
+            prepStatement.setString(5, password); 
+            prepStatement.setDouble(6, 0.0);
+            prepStatement.executeUpdate();
+        }
+
+        connection.commit();
+        return true; 
     }
 
     //done
@@ -242,7 +296,7 @@ public class test_driver
             String symbol = resultSet.getString(1);
             float oldPrice = resultSet.getFloat(2);
             
-            System.out.println("Here is the current price of mutual fund with symbol " + symbol + ":" + oldPrice);
+            System.out.println("\nHere is the current price of today's mutual fund with its symbol " + symbol + ": " + oldPrice);
             System.out.print("Enter the new price: ");
             float newPrice = in.nextFloat();
 
@@ -259,19 +313,169 @@ public class test_driver
         return true;
     }
 
+    //done
     public static boolean addFunds() throws SQLException
     {
-        return false;
+        Scanner in = new Scanner(System.in);
+
+        String symbol = "";
+        String name = "";
+        String description = "";
+        String category = "";
+        float price = 0;
+        String c_date = dateAsString(getMutualDate());
+
+        System.out.println("\nYou will be prompted for the information for the new MUTUALFUND. \nNote: If an entered value is longer in length than requested, it will be truncated.");
+        
+        System.out.print("Enter the symbol (max 20 characters): ");
+        symbol = in.nextLine();
+
+        if(!symbolAvailable(symbol))
+        {
+            System.out.println("Error. Symbol name already exits.");
+            return false;
+        }
+
+        System.out.print("Enter the name (max 30 characters): ");
+        name = in.nextLine();
+
+        System.out.print("Enter the description (max 100 characters): ");
+        description = in.nextLine();
+
+        System.out.print("Enter the category (fixed, bonds, stocks, or mixed): ");
+        category = in.nextLine();
+
+        System.out.print("Enter the price: ");
+        price = in.nextFloat();
+
+        query = "INSERT into MUTUALFUND values (?,?,?,?,?)";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, symbol); 
+		prepStatement.setString(2, name); 
+		prepStatement.setString(3, description); 
+		prepStatement.setString(4, category);
+        prepStatement.setString(5, c_date);
+		prepStatement.executeUpdate();
+
+        query = "INSERT into CLOSINGPRICE values (?,?,?)";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, symbol);
+		prepStatement.setFloat(2,  price);
+		prepStatement.setString(3, c_date);
+		prepStatement.executeUpdate();
+
+		connection.commit();
+		return true;
     }
 
+    //done
     public static boolean updateTime() throws SQLException
     {
-        return false;
+        Scanner in = new Scanner(System.in);
+        System.out.println("\nThe current date is " + getMutualDate());
+        
+        Date current = getMutualDate();
+        System.out.print("Enter the new year (4 digits): ");
+        int year = in.nextInt();
+        in.nextLine();
+
+        System.out.print("Enter the new month (1-2 digits, 1 to 12 only): ");
+        int month = in.nextInt();
+        in.nextLine();
+
+        System.out.print("Enter the new day (1-2 digits, 1 to 31 only): ");
+        int day = in.nextInt();
+        in.nextLine();
+
+        String dateAsString = day + "-" + getMonth(month) + "-" + year;
+        query = "UPDATE MUTUALDATE SET c_date = ?";
+		prepStatement = connection.prepareStatement(query);
+        prepStatement.setString(1, dateAsString);
+		prepStatement.executeUpdate();
+
+        boolean dateExists = false;
+		query = "SELECT symbol, price FROM CLOSINGPRICE WHERE p_date = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, dateAsString);
+		resultSet = prepStatement.executeQuery();
+		while(resultSet.next())
+			dateExists = true;
+		
+		if(!dateExists)
+		{
+			query = "SELECT symbol, price FROM CLOSINGPRICE WHERE p_date = ?";
+			prepStatement = connection.prepareStatement(query);
+			prepStatement.setString(1, dateAsString(current));
+			resultSet = prepStatement.executeQuery();
+			double price;
+			String symbol;
+			while(resultSet.next())
+			{
+				symbol = resultSet.getString(1);
+				price = resultSet.getDouble(2);
+				query = "INSERT INTO CLOSINGPRICE VALUES(?,?,?)";
+				prepStatement = connection.prepareStatement(query);
+				prepStatement.setString(1, symbol);
+				prepStatement.setDouble(2,  price);
+				prepStatement.setString(3, dateAsString);
+				prepStatement.execute();
+			}
+		}
+
+        connection.commit();
+		return true;
+
     }
 
+    //done
     public static boolean viewStats() throws SQLException
     {
-        return false;
+        Scanner in = new Scanner(System.in);
+
+        System.out.print("\nHow many months of statsitics would you like to view? ");
+        int numMonths = in.nextInt();
+        in.nextLine();
+
+        System.out.print("How many rows or data would you like to view for the past " + numMonths + " months? ");
+        int numRows = in.nextInt();
+        in.nextLine();
+
+        Date now = getMutualDate();
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(now);
+        cal.add(Calendar.MONTH, -numMonths);    //subtract here
+
+        query = "SELECT * FROM (SELECT category, sum(num_shares) FROM SHARES_SOLD WHERE t_date >= ?  GROUP BY category ORDER BY sum(num_shares) DESC) WHERE rownum <= ?";
+        prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, dateformat.format(cal.getTime()));
+		prepStatement.setInt(2, numRows);
+		resultSet = prepStatement.executeQuery();
+
+        System.out.println("\n\t\tDISPLAYING STATISTICS FOR THE LAST " + numMonths + " MONTHS");
+        System.out.println("Top " + numRows + " Highest Volume Categories");
+		
+        System.out.printf("%-15S %-15S%n", "CATEGORY", "SHARES");
+		while(resultSet.next()) 
+        {
+			System.out.printf("%-15s %-15S%n", resultSet.getString(1), resultSet.getInt(2));
+		}
+		
+		query = "SELECT * FROM (SELECT login, sum(amount) FROM TRXLOG WHERE action = 'buy' AND t_date >= ? GROUP BY login ORDER BY sum(amount) DESC) WHERE rownum <= ?";		
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, dateformat.format(now.getTime()));
+		prepStatement.setInt(2, numRows);
+		resultSet = prepStatement.executeQuery();
+
+        System.out.println("\nTop " + numRows + " Investors");
+
+		System.out.printf("%-15S %-15S%n", "USER", "AMOUNT");
+		while(resultSet.next()) 
+        {
+			System.out.printf("%-15s %-15S%n", resultSet.getString(1), resultSet.getDouble(2));
+		}
+
+		connection.commit();
+		return true;
     }
     /*
      * END ADMIN ONLY FUNCTIONS
@@ -280,10 +484,87 @@ public class test_driver
     /*
      * START USER ONLY FUNCTIONS
      */
-     public static boolean browseFunds() throws SQLException
-     {
-         return false;
-     }
+     //done
+    public static boolean browseFunds() throws SQLException
+    {
+        Scanner in = new Scanner(System.in);
+        String userCategory = "";
+        
+        System.out.println("\nSelect an option: \n1 - View All Funds \n2 - View by Categories");
+        System.out.print("Your choice: ");
+        int option = in.nextInt();
+        in.nextLine();
+
+        if(option == 2)
+        {
+            query = "SELECT category FROM MUTUALFUND GROUP BY CATEGORY";
+            prepStatement = connection.prepareStatement(query);
+            resultSet = prepStatement.executeQuery();
+
+            System.out.println("List of available categories:");
+            while(resultSet.next())
+            {
+                System.out.println(resultSet.getString(1));
+            }
+            
+            System.out.print("Chose a category: ");
+            userCategory = in.nextLine();
+        }
+
+        System.out.print("Enter the date you wish to view in the following format (DAY-MONTH-YEAR): ");
+        String userDate[] = in.nextLine().split("-");
+        String dateAsString = Integer.parseInt(userDate[0]) + "-" + getMonth(Integer.parseInt(userDate[1])) + "-" + Integer.parseInt(userDate[2]);
+        
+        System.out.println("\nSelect an option: \n1 - Order by Price \n2 - Order Alphabetically");
+        System.out.print("Your choice: ");
+        int orderBy = in.nextInt();
+        in.nextLine();
+
+        System.out.printf("%25S %5S %35S %15S %5S%n", "Name", "Symbol", "Description", "Category", "Price");
+
+        if(orderBy == 1)
+        {
+            if(option == 2)
+            {
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY price DESC";
+                prepStatement = connection.prepareStatement(query);
+                prepStatement.setString(1,  dateAsString);
+                prepStatement.setString(2,  userCategory);
+                resultSet = prepStatement.executeQuery();
+            }
+            else
+            {
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? ORDER BY price DESC";
+                prepStatement = connection.prepareStatement(query);
+                prepStatement.setString(1,  dateAsString);
+            }
+        }
+        else if(orderBy == 2)
+        {
+            if(option == 2)
+            {
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY name DESC";
+                prepStatement = connection.prepareStatement(query);
+                prepStatement.setString(1,  dateAsString);
+                prepStatement.setString(2, userCategory);
+                resultSet = prepStatement.executeQuery();
+            }
+            else
+            {
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? ORDER BY name DESC";
+                prepStatement = connection.prepareStatement(query);
+                prepStatement.setString(1,  dateAsString);
+                resultSet = prepStatement.executeQuery();
+            }
+        }
+
+        while(resultSet.next())
+        {
+            System.out.printf("%25S %5S %35S %15S %5S%n",resultSet.getString(2),resultSet.getString(1),resultSet.getString(3),resultSet.getString(4),resultSet.getFloat(5));
+        }
+
+        return true;
+    }
 
     //done
     public static boolean searchFunds() throws SQLException 
@@ -325,7 +606,8 @@ public class test_driver
 		return true;
      }
 
-     //done
+    
+    //done
     public static boolean sellShares(String userName) throws SQLException
     {
         Scanner in = new Scanner(System.in);
@@ -335,7 +617,7 @@ public class test_driver
         prepStatement.setString(1,  userName);
         resultSet = prepStatement.executeQuery();
 
-        System.out.println("Here is a list of the share you can sell:");
+        System.out.println("\nHere is a list of the share you can sell:");
         System.out.printf("%5S %5S%n", "Symbol", "Shares");
 
         while(resultSet.next())
@@ -349,7 +631,7 @@ public class test_driver
         boolean ownsShare = false;
         int ownedAmount = 0;
 
-        query = "SELECT shares FROM OWNS where login = ? AND symbol = ?";
+        query = "SELECT shares FROM OWNS WHERE login = ? AND symbol = ?";
         prepStatement = connection.prepareStatement(query);
         prepStatement.setString(1, userName);
         prepStatement.setString(2,  symbol);
@@ -366,7 +648,7 @@ public class test_driver
             return false;
         }
 
-        System.out.println("How many shares would you like to sell?");
+        System.out.print("How many shares would you like to sell? ");
         int toSell = in.nextInt();
 
         if(ownedAmount < toSell)
@@ -375,7 +657,7 @@ public class test_driver
             return false;
         }
 
-        int max = findLatestTransaction();
+        int max = getMaxTransaction();
         String date = dateAsString(getMutualDate());
         float price = getFundPrice(symbol, getMutualDate());
 
@@ -390,17 +672,78 @@ public class test_driver
         prepStatement.setFloat(7, price);
         prepStatement.setFloat(8, toSell * price);
         prepStatement.executeUpdate();
-
         updateOwnedShares(userName, symbol, toSell, false);
 
         connection.commit();
         return true;
      }
 
-     public static boolean invest(String userName) throws SQLException
-     {
-         return false;
-     }
+    //done
+    public static boolean invest(String userName) throws SQLException
+    {
+        Scanner in = new Scanner(System.in);
+        int maxTrans = getMaxTransaction() + 1;
+		Date now = getMutualDate();
+        int alloc_id = 0;
+        String sym = "";
+		float percent = 0;
+		int total = 0;
+		int numshares = 0;
+		
+        System.out.print("How much ($) would you like to deposit? ");
+		float amount = in.nextFloat();
+
+		if(amount <= 0)
+		{
+			System.out.println("Cannot deposit less than or equal to 0. Please try again.");
+			return false;
+		}
+
+		query = "INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount) VALUES (?,?,?,?,?,?,?,?)";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setInt(1, maxTrans);
+		prepStatement.setString(2, userName);
+        prepStatement.setString(3, null);
+		prepStatement.setString(4,  dateAsString(now));
+		prepStatement.setString(5, "deposit");
+		prepStatement.setInt(6, 0);
+        prepStatement.setFloat(7, 0);
+        prepStatement.setFloat(7, amount);
+        prepStatement.executeUpdate();
+
+        /*
+		query = "SELECT alloc_no FROM RecentAllocations WHERE login = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, userName);
+		resultSet = prepStatement.executeQuery();
+		
+        boolean hasMore = true;
+		while(resultSet.next())
+		{
+			hasMore = false;
+			alloc_id = resultSet.getInt(1);
+		}
+		if(hasMore)
+			return true;
+		
+		query = "SELECT symbol, percentage FROM PREFERS WHERE allocation_no = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setInt(1, alloc_id);
+		resultSet2 = prepStatement.executeQuery();
+		while(resultSet2.next())
+		{
+			sym = resultSet2.getString(1);
+			percent = resultSet2.getFloat(2);
+			total = Math.round(percent * amount);
+			numshares = (int)Math.floor(total / getFundPrice(sym, now));
+			updateOwnedShares(userName, sym, numshares, true);
+        }
+        */
+		
+		connection.commit();
+		return true;
+        
+    }
 
     //done
     public static boolean buyShares(String userName) throws SQLException
@@ -411,7 +754,7 @@ public class test_driver
         int trans = getMaxTransaction();
         String currentDate = dateAsString(getMutualDate());
 
-        query = "SELECT symbol, price FROM FUNDS where p_date = ?";
+        query = "SELECT symbol, price FROM BROWSE_FUNDS WHERE p_date = ?";
         prepStatement = connection.prepareStatement(query);
         prepStatement.setString(1, currentDate);
         resultSet = prepStatement.executeQuery();
@@ -419,12 +762,12 @@ public class test_driver
 
         while(resultSet.next())
         {
-            System.out.println(resultSet.getString(1) + "\t" + resultSet.getFloat(2));
+            System.out.println(resultSet.getString(1) + "\t\t" + resultSet.getFloat(2));
         }
 
         System.out.println("\n" + userName + ", your current balance is $" + balance);
 
-        System.out.print("Enter the symbol of the fund you would like to purchase: ");
+        System.out.print("Enter the symbol from the above list of the fund you would like to purchase: ");
         String symbol = in.nextLine();
 
         query = "SELECT symbol from MUTUALFUND where symbol=?";
@@ -446,7 +789,7 @@ public class test_driver
 
         float price = getFundPrice(symbol, getMutualDate());
 
-        System.out.print("Enter the number of shres you would like to purchase: ");
+        System.out.print("Enter the number of shrares you would like to purchase: ");
         int amount = in.nextInt();
             
         if(amount * price > balance)
@@ -480,9 +823,35 @@ public class test_driver
         return false;
     }
 
+    //done
     public static boolean viewPortfolio(String userName) throws SQLException
     {
-        return false;
+        query = "SELECT * FROM PORTFOLIO WHERE login = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1,userName);
+		resultSet = prepStatement.executeQuery();
+
+		System.out.printf("\n%-20S %-7S %-6S %-7S %-7S %-7S%n", "SYMBOL", "PRICE", "SHARES", "VALUE", "COST", "YIELD");
+		
+		double total = 0.0;
+		
+		while(resultSet.next()) 
+        {
+			String symbol = resultSet.getString(2);
+			double price = resultSet.getDouble(3); 
+			int shares = resultSet.getInt(4);
+			double current_value = price * shares;
+			double cost_value = resultSet.getDouble(5);	
+			double adjusted_cost = cost_value - resultSet.getDouble(6);	
+			double yield = current_value - adjusted_cost;
+			
+			System.out.printf("%-20s %-7.2f %-6d %-7.2f %-7.2f %-7.2f%n", symbol, price, shares, current_value, cost_value, yield);
+			total += current_value;
+		}
+		
+		System.out.println("\nTotal value of your portfolio is: " + total);
+		connection.commit();
+		return true;
     }
     /*
      * END USER ONLY FUNCTIONS
@@ -492,15 +861,24 @@ public class test_driver
     /*
      * START HELPER  FUNCTIONS
      */
-    private static int findLatestTransaction() throws SQLException
-	{
-		query = "SELECT * FROM MAXTRX";
-		prepStatement = connection.prepareStatement(query);
-		resultSet = prepStatement.executeQuery();
-		resultSet.next();
-
-		return resultSet.getInt(1);
-	}
+    public static boolean checkLogin(boolean admin, String userName, String password) throws SQLException
+    {
+        if(admin)
+            query = "SELECT * FROM ADMINISTRATOR WHERE login = ? AND password = ?";
+		else
+			query = "SELECT * FROM CUSTOMER WHERE login = ? AND password = ?";
+		
+        prepStatement = connection.prepareStatement(query);
+        prepStatement.setString(1, userName);
+        prepStatement.setString(2, password);
+        resultSet = prepStatement.executeQuery();
+        while (resultSet.next())
+        {
+            if(resultSet.getString(1).equals(userName))
+                return true;
+        }
+        return false;
+    }
 
     private static float getUserBalance(String userName) throws SQLException
 	{
@@ -515,7 +893,7 @@ public class test_driver
 
     private static int getMaxAllocNo() throws SQLException
 	{
-		query = "SELECT * FROM MAXALLOC";
+		query = "SELECT * FROM MAX_ALLOCATIONS";
 		prepStatement = connection.prepareStatement(query);
 		resultSet = prepStatement.executeQuery();
 		resultSet.next();
@@ -549,7 +927,7 @@ public class test_driver
 
     public static int getMaxTransaction() throws SQLException
 	{
-		query = "SELECT * FROM MAXTRX"; //update this in the schema file
+		query = "SELECT * FROM MAX_TRANSACTIONS"; //update this in the schema file
 		prepStatement = connection.prepareStatement(query);
 		resultSet = prepStatement.executeQuery();
 		resultSet.next();
@@ -577,7 +955,7 @@ public class test_driver
 		{	
             if(ownsShares)
 			{
-				query = "UPDATE OWNS set shares = ? WHERE login = ? AND symbol = ?";
+				query = "UPDATE OWNS SET shares = ? WHERE login = ? AND symbol = ?";
 				prepStatement = connection.prepareStatement(query);
 				prepStatement.setInt(1,  amount + shares);
 				prepStatement.setString(2, userName);
@@ -654,6 +1032,50 @@ public class test_driver
 		}		
 	}
 
+    public static boolean symbolAvailable(String symbol) throws SQLException
+    {
+        query = "SELECT * FROM MUTUALFUND WHERE symbol = ?";
+        prepStatement = connection.prepareStatement(query);
+        prepStatement.setString(1, symbol);
+        resultSet = prepStatement.executeQuery();
+
+        while (resultSet.next())
+        {
+            if((resultSet.getString(1)).equals(symbol))
+                return false;
+        }
+
+        connection.commit();
+        return true;
+    }
+
+    public static boolean nameAvailable(String username) throws SQLException
+    {
+        query = "SELECT * FROM CUSTOMER WHERE login = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, username);
+		resultSet = prepStatement.executeQuery();
+
+		while (resultSet.next())
+		{
+			if(resultSet.getString(1).equals(username))
+                return false;
+		}
+		
+		query = "SELECT * FROM ADMINISTRATOR WHERE login = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, username);
+		resultSet = prepStatement.executeQuery();
+	
+        while (resultSet.next())
+		{
+			if(resultSet.getString(1).equals(username))
+                return false;
+		}
+
+		connection.commit();
+        return true;	
+    }
     /*
      * END HELPER FUNCTIONS
      */
