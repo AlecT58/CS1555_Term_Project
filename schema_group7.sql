@@ -571,7 +571,7 @@ CREATE OR REPLACE PROCEDURE UPDATE_TRANSACTIONS(maxTransID IN NUMBER, customerID
             SELECT price into share_price 
                 FROM CLOSINGPRICE 
                 WHERE symbol = sym AND p_date = depositDate;
-            shares := floor(bal*percent/sharePrice);
+            shares := floor(bal * percent / sharePrice);
             INSERT INTO TRXLOG 
                 VALUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, num_shares * share_price);
         END LOOP;

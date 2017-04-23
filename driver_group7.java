@@ -36,7 +36,7 @@ public class driver_group7
             Scanner in = new Scanner(System.in);
             int userChoice = -1;
 
-            System.out.println("\t\tBETTER FUTURE ACCESS DATABASE SYSTEM");
+            System.out.println("\n\t\tBETTER FUTURE ACCESS DATABASE SYSTEM");
 
             while (userChoice == -1)
             {
@@ -103,6 +103,7 @@ public class driver_group7
                         System.out.print("Your choice: ");
                         userChoice = in.nextInt();
 
+                        boolean updatedToday = false;
                         switch(userChoice)
                         {
                             case 0:
@@ -110,19 +111,30 @@ public class driver_group7
                                 start = false;
                                 break;
                             case 1:
-                                addUser();  //done
+                                if(addUser())
+                                    System.out.println("\nNEW USER ADDED"); 
                                 break;
                             case 2:
-                                updatePrices();     //done
+                                if(!updatedToday && updatePrices())
+                                {
+                                    System.out.println("\nPRICES UPDATED");
+                                    updatedToday = true;
+                                }
+                                else
+                                {
+                                    System.out.println("\nERROR. PRICES CAN ONLY BE UPDATED ONCE A DAY");  
+                                }
                                 break;
                             case 3:
-                                addFunds();     //done
+                                if(addFunds())
+                                    System.out.println("\nNEW FUNDS ADDED"); 
                                 break;
                             case 4:
-                                updateTime();       //done
+                                if(updateTime())
+                                    System.out.println("\nTIME UPDATED");      
                                 break;
                             case 5:
-                                viewStats();        //done
+                                viewStats();        
                                 break;
                             default:
                                 System.out.println("Error. Invalid option. Please try again.");
@@ -215,7 +227,7 @@ public class driver_group7
 
         System.out.println("\nYou will be prompted for the information for the new user. \nNote: If an entered value is longer in length than requested, it will be truncated.");
         
-        System.out.print("\nEnter the username for the new user (20 characters): ");
+        System.out.print("Enter the username for the new user (20 characters): ");
         username = in.nextLine();
 
         if(!nameAvailable(username))
@@ -224,20 +236,20 @@ public class driver_group7
             return false;
         }
 
-        System.out.print("\nEnter the password for the new user (10 characters): ");
+        System.out.print("Enter the password for the new user (10 characters): ");
         password = in.nextLine();
 
-        System.out.print("\nIs the new user an admin? (Y for yes, other for no): ");
+        System.out.print("Is the new user an admin? (Y for yes, other for no): ");
         if(in.nextLine().equalsIgnoreCase("Y"))
             admin = true;
 
-        System.out.print("\nEnter the name for the new user (20 characters): ");
+        System.out.print("Enter the name for the new user (20 characters): ");
         name = in.nextLine();
 
-        System.out.print("\nEnter the address for the new user (30 characters): ");
+        System.out.print("Enter the address for the new user (30 characters): ");
         address = in.nextLine();
 
-        System.out.print("\nEnter the email for the new user (30 characters): ");
+        System.out.print("Enter the email for the new user (30 characters): ");
         email = in.nextLine();
 
         if(admin)
@@ -284,7 +296,7 @@ public class driver_group7
             String symbol = resultSet.getString(1);
             float oldPrice = resultSet.getFloat(2);
             
-            System.out.println("\nHere is the current price of mutual fund with symbol " + symbol + ":" + oldPrice);
+            System.out.println("\nHere is the current price of today's mutual fund with its symbol " + symbol + ": " + oldPrice);
             System.out.print("Enter the new price: ");
             float newPrice = in.nextFloat();
 
@@ -313,7 +325,7 @@ public class driver_group7
         float price = 0;
         String c_date = dateAsString(getMutualDate());
 
-        System.out.println("You will be prompted for the information for the new MUTUALFUND. \nNote: If an entered value is longer in length than requested, it will be truncated.");
+        System.out.println("\nYou will be prompted for the information for the new MUTUALFUND. \nNote: If an entered value is longer in length than requested, it will be truncated.");
         
         System.out.print("Enter the symbol (max 20 characters): ");
         symbol = in.nextLine();
@@ -324,16 +336,16 @@ public class driver_group7
             return false;
         }
 
-        System.out.print("\nEnter the name (max 30 characters): ");
+        System.out.print("Enter the name (max 30 characters): ");
         name = in.nextLine();
 
-        System.out.print("\nEnter the description (max 100 characters): ");
+        System.out.print("Enter the description (max 100 characters): ");
         description = in.nextLine();
 
-        System.out.print("\nEnter the category (fixed, bonds, stocks, or mixed): ");
+        System.out.print("Enter the category (fixed, bonds, stocks, or mixed): ");
         category = in.nextLine();
 
-        System.out.print("\nEnter the price: ");
+        System.out.print("Enter the price: ");
         price = in.nextFloat();
 
         query = "INSERT into MUTUALFUND values (?,?,?,?,?)";
@@ -363,15 +375,15 @@ public class driver_group7
         System.out.println("\nThe current date is " + getMutualDate());
         
         Date current = getMutualDate();
-        System.out.print("\nEnter the new year (4 digits): ");
+        System.out.print("Enter the new year (4 digits): ");
         int year = in.nextInt();
         in.nextLine();
 
-        System.out.print("\nEnter the new month (1-2 digits, 1 to 12 only): ");
+        System.out.print("Enter the new month (1-2 digits, 1 to 12 only): ");
         int month = in.nextInt();
         in.nextLine();
 
-        System.out.print("\nEnter the new day (1-2 digits, 1 to 31 only): ");
+        System.out.print("Enter the new day (1-2 digits, 1 to 31 only): ");
         int day = in.nextInt();
         in.nextLine();
 
@@ -424,7 +436,7 @@ public class driver_group7
         int numMonths = in.nextInt();
         in.nextLine();
 
-        System.out.println("\nHow many rows or data would you like to view for the past " + numMonths + " months? ");
+        System.out.print("How many rows or data would you like to view for the past " + numMonths + " months? ");
         int numRows = in.nextInt();
         in.nextLine();
 
@@ -433,7 +445,7 @@ public class driver_group7
         cal.setTime(now);
         cal.add(Calendar.MONTH, -numMonths);    //subtract here
 
-        query = "SELECT * FROM (Select category, sum(num_shares) FROM SoldShares WHERE t_date >= ?  GROUP BY category ORDER BY sum(num_shares) desc) WHERE rownum <= ?";
+        query = "SELECT * FROM (SELECT category, sum(num_shares) FROM SHARES_SOLD WHERE t_date >= ?  GROUP BY category ORDER BY sum(num_shares) DESC) WHERE rownum <= ?";
         prepStatement = connection.prepareStatement(query);
 		prepStatement.setString(1, dateformat.format(cal.getTime()));
 		prepStatement.setInt(2, numRows);
@@ -448,7 +460,7 @@ public class driver_group7
 			System.out.printf("%-15s %-15S%n", resultSet.getString(1), resultSet.getInt(2));
 		}
 		
-		query = "SELECT * FROM (SELECT login, sum(amount) FROM TRXLOG WHERE action = 'buy' AND t_date >= ? GROUP BY login ORDER BY sum(amount) desc) WHERE rownum <= ?";		
+		query = "SELECT * FROM (SELECT login, sum(amount) FROM TRXLOG WHERE action = 'buy' AND t_date >= ? GROUP BY login ORDER BY sum(amount) DESC) WHERE rownum <= ?";		
 		prepStatement = connection.prepareStatement(query);
 		prepStatement.setString(1, dateformat.format(now.getTime()));
 		prepStatement.setInt(2, numRows);
@@ -478,7 +490,7 @@ public class driver_group7
         Scanner in = new Scanner(System.in);
         String userCategory = "";
         
-        System.out.println("\nSelect an option \n1.)View All Funds \n2.)View by Categories");
+        System.out.println("\nSelect an option: \n1 - View All Funds \n2 - View by Categories");
         System.out.print("Your choice: ");
         int option = in.nextInt();
         in.nextLine();
@@ -495,26 +507,26 @@ public class driver_group7
                 System.out.println(resultSet.getString(1));
             }
             
-            System.out.println("\nChose a category: ");
+            System.out.print("Chose a category: ");
             userCategory = in.nextLine();
         }
 
-        System.out.print("Enter the date you wish to view in the following fotmat (YEAR[4 digits]-MONTH[2 digits]-DAY[2 digits]: ");
+        System.out.print("Enter the date you wish to view in the following format (DAY-MONTH-YEAR): ");
         String userDate[] = in.nextLine().split("-");
-        String dateAsString = Integer.parseInt(userDate[2]) + "-" + getMonth(Integer.parseInt(userDate[1])) + "-" + Integer.parseInt(userDate[0]);
+        String dateAsString = Integer.parseInt(userDate[0]) + "-" + getMonth(Integer.parseInt(userDate[1])) + "-" + Integer.parseInt(userDate[2]);
         
-        System.out.println("Select an option \n1.) Order by Price \n2.) Order Alphabetically");
+        System.out.println("\nSelect an option: \n1 - Order by Price \n2 - Order Alphabetically");
         System.out.print("Your choice: ");
         int orderBy = in.nextInt();
         in.nextLine();
 
-        System.out.printf("%35S %15S %45S %25S %15S%n", "Name", "Symbol", "Description", "Category", "Price");
+        System.out.printf("%25S %5S %35S %15S %5S%n", "Name", "Symbol", "Description", "Category", "Price");
 
         if(orderBy == 1)
         {
             if(option == 2)
             {
-                query = "SELECT * FROM FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY price DESC";
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY price DESC";
                 prepStatement = connection.prepareStatement(query);
                 prepStatement.setString(1,  dateAsString);
                 prepStatement.setString(2,  userCategory);
@@ -522,7 +534,7 @@ public class driver_group7
             }
             else
             {
-                query = "SELECT * FROM FUNDS WHERE P_DATE = ? ORDER BY price DESC";
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? ORDER BY price DESC";
                 prepStatement = connection.prepareStatement(query);
                 prepStatement.setString(1,  dateAsString);
             }
@@ -531,7 +543,7 @@ public class driver_group7
         {
             if(option == 2)
             {
-                query = "SELECT * FROM FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY name DESC";
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? AND CATEGORY = ? ORDER BY name DESC";
                 prepStatement = connection.prepareStatement(query);
                 prepStatement.setString(1,  dateAsString);
                 prepStatement.setString(2, userCategory);
@@ -539,7 +551,7 @@ public class driver_group7
             }
             else
             {
-                query = "SELECT * FROM FUNDS WHERE P_DATE = ? ORDER BY name DESC";
+                query = "SELECT * FROM BROWSE_FUNDS WHERE P_DATE = ? ORDER BY name DESC";
                 prepStatement = connection.prepareStatement(query);
                 prepStatement.setString(1,  dateAsString);
                 resultSet = prepStatement.executeQuery();
@@ -548,7 +560,7 @@ public class driver_group7
 
         while(resultSet.next())
         {
-            System.out.printf("%35S %15S %45S %25S %15S%n",resultSet.getString(2),resultSet.getString(1),resultSet.getString(3),resultSet.getString(4),resultSet.getFloat(5));
+            System.out.printf("%25S %5S %35S %15S %5S%n",resultSet.getString(2),resultSet.getString(1),resultSet.getString(3),resultSet.getString(4),resultSet.getFloat(5));
         }
 
         return true;
@@ -636,7 +648,7 @@ public class driver_group7
             return false;
         }
 
-        System.out.println("How many shares would you like to sell?");
+        System.out.print("How many shares would you like to sell? ");
         int toSell = in.nextInt();
 
         if(ownedAmount < toSell)
@@ -678,7 +690,7 @@ public class driver_group7
 		int total = 0;
 		int numshares = 0;
 		
-        System.out.println("How much would you like to deposit?");
+        System.out.print("How much ($) would you like to deposit? ");
 		float amount = in.nextFloat();
 
 		if(amount <= 0)
@@ -687,15 +699,19 @@ public class driver_group7
 			return false;
 		}
 
-		query = "INSERT INTO TRXLOG (trans_id, login, t_date, action, amount) VALUES (?,?,?,?,?)";
+		query = "INSERT INTO TRXLOG (trans_id, login, symbol, t_date, action, num_shares, price, amount) VALUES (?,?,?,?,?,?,?,?)";
 		prepStatement = connection.prepareStatement(query);
 		prepStatement.setInt(1, maxTrans);
 		prepStatement.setString(2, userName);
-		prepStatement.setString(3,  dateAsString(now));
-		prepStatement.setString(4, "deposit");
-		prepStatement.setFloat(5, amount);
+        prepStatement.setString(3, null);
+		prepStatement.setString(4,  dateAsString(now));
+		prepStatement.setString(5, "deposit");
+		prepStatement.setInt(6, 0);
+        prepStatement.setFloat(7, 0);
+        prepStatement.setFloat(7, amount);
         prepStatement.executeUpdate();
 
+        /*
 		query = "SELECT alloc_no FROM RecentAllocations WHERE login = ?";
 		prepStatement = connection.prepareStatement(query);
 		prepStatement.setString(1, userName);
@@ -722,6 +738,7 @@ public class driver_group7
 			numshares = (int)Math.floor(total / getFundPrice(sym, now));
 			updateOwnedShares(userName, sym, numshares, true);
         }
+        */
 		
 		connection.commit();
 		return true;
@@ -745,12 +762,12 @@ public class driver_group7
 
         while(resultSet.next())
         {
-            System.out.println(resultSet.getString(1) + "\t" + resultSet.getFloat(2));
+            System.out.println(resultSet.getString(1) + "\t\t" + resultSet.getFloat(2));
         }
 
         System.out.println("\n" + userName + ", your current balance is $" + balance);
 
-        System.out.print("Enter the symbol of the fund you would like to purchase: ");
+        System.out.print("Enter the symbol from the above list of the fund you would like to purchase: ");
         String symbol = in.nextLine();
 
         query = "SELECT symbol from MUTUALFUND where symbol=?";
@@ -772,7 +789,7 @@ public class driver_group7
 
         float price = getFundPrice(symbol, getMutualDate());
 
-        System.out.print("Enter the number of shres you would like to purchase: ");
+        System.out.print("Enter the number of shrares you would like to purchase: ");
         int amount = in.nextInt();
             
         if(amount * price > balance)
@@ -814,7 +831,7 @@ public class driver_group7
 		prepStatement.setString(1,userName);
 		resultSet = prepStatement.executeQuery();
 
-		System.out.printf("%-20S %-7S %-6S %-7S %-7S %-7S%n", "SYMBOL", "PRICE", "SHARES", "VALUE", "COST", "YIELD");
+		System.out.printf("\n%-20S %-7S %-6S %-7S %-7S %-7S%n", "SYMBOL", "PRICE", "SHARES", "VALUE", "COST", "YIELD");
 		
 		double total = 0.0;
 		
@@ -832,7 +849,7 @@ public class driver_group7
 			total += current_value;
 		}
 		
-		System.out.println("Total value of your portfolio is: " + total);
+		System.out.println("\nTotal value of your portfolio is: " + total);
 		connection.commit();
 		return true;
     }
