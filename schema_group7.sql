@@ -435,106 +435,16 @@ COMMIT;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
-                            --START TRIGGER CREATION--
--------------------------------------------------------------------------------
-Create or replace trigger OnDepositTrx
-BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
-On TRXLOG
-For Each Row
-Begin
-	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
-	where symbol = symbol -- idea is here. will do later
-	
-	
-End;
-/
-
---Trigger that will make sure the balance will be updated properly after buying or selling
-CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
-    BEFORE INSERT
-    ON TRXLOG
-    FOR EACH ROW   
-    BEGIN
-        --selling shares, need to subtract from balance; buying shares, add to balace
-        IF :new.action LIKE 'sell' THEN --PROCEDURE to update balance needs to go here
-        END IF;
-        IF :new.action LIKE 'buy' THEN --PROCEDURE to update balance needs to go here
-    END;
-/
-
-COMMIT;
--------------------------------------------------------------------------------
-                            --END TRIGGER CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --START PROCEDURE CREATION--
--------------------------------------------------------------------------------
-CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
-    AS Old_Balance FLOAT;
-    BEGIN
-        SELECT balance into Old_Balance 
-        FROM CUSTOMER WHERE customerId = login;
-        UPDATE CUSTOMER 
-            SET balance = Old_Balance - amountToSubtract
-            WHERE login = customerID;
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT)
-    AS Old_Balance FLOAT;
-    BEGIN
-        SELECT balance into Old_Balance 
-        FROM CUSTOMER WHERE customerId = login;
-        UPDATE CUSTOMER 
-            SET balance = Old_Balance + amountToAdd
-            WHERE login = customerID;
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
-    AS
-    BEGIN
-        RETURN(numShares * sharePrice);
-    END;
-/
-
---CREATE OR REPLACE PROCEDURE insertTransaction(buyOrDeposit IN VARCHAR2, customerId IN VARCHAR2, )
--------------------------------------------------------------------------------
-                            --END PROCEDURE CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --START FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --END FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
                             --START VIEW CREATION--
 -------------------------------------------------------------------------------
-CREATE OR REPLACE VIEW SHARES_SOLD
+CREATE OR REPLACE VIEW SHARES_SOLD --done
     AS SELECT symbol, category, num_shares, t_date
     FROM TRXLOG NATURAL JOIN MUTUALFUND   
     WHERE action = 'buy';
 
-CREATE OR REPLACE VIEW BROWSE_FUNDS_VIEW
+CREATE OR REPLACE VIEW BROWSE_FUNDS --done
     AS SELECT symbol, name, description, category, price, p_date
     FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
-
-CREATE OR REPLACE VIEW PORTFOLIO --to do
-    AS 
-    SELECT ownsSelect.login, ownsSelect.symbol, ownsSelect.price, ownsSelect.shares, coalesce(costSelect.cost_value, 0) as Cost_Values, coalesce(costSelect.sales_value, 0) as Sales_Values
-    FROM 
-        (SELECT * FROM OWNS NATURAL JOIN RecentPrice) ownsSelect
-    LEFT JOIN
-        (SELECT COST_BY_SHARE.login, COST_BY_SHARE.symbol, COST_BY_SHARE.cost_value, COST_BY_SHARE.sales_value
-	    FROM COST_BY_SHARE
-	        LEFT JOIN Sales
-            ON Cost.login = Sales.login AND Cost.symbol = Sales.symbol) costSelect
-    ON ownsSelect.login = costSelect.login AND ownsSelect.symbol = costSelect.symbol;
 
 CREATE OR REPLACE VIEW RECENT_PRICES --done
     AS SELECT *
@@ -546,6 +456,18 @@ CREATE OR REPLACE VIEW RECENT_PRICES --done
             FROM CLOSINGPRICE
             GROUP BY symbol) secondClose
     ON firstClose.symbol = secondClose.symbol AND secondClose.maxD = firstClose.p_date);
+
+CREATE OR REPLACE VIEW PORTFOLIO --done
+    AS 
+    SELECT ownsSelect.login, ownsSelect.symbol, ownsSelect.price, ownsSelect.shares, coalesce(costSelect.Amount_Per_Group, 0) as Cost_Values, coalesce(costSelect.Total_Sales_Made, 0) as Sales_Values
+    FROM 
+        (SELECT * FROM OWNS NATURAL JOIN RECENT_PRICES) ownsSelect
+    LEFT JOIN
+        (SELECT COST_BY_SHARE.login, COST_BY_SHARE.symbol, COST_BY_SHARE.Amount_Per_Group, COST_BY_SHARE.Total_Sales_Made
+	    FROM COST_BY_SHARE
+	        LEFT JOIN SOLD_TRANSACTIONS 
+            ON COST_BY_SHARE.login = SOLD_TRANSACTIONS .login AND COST_BY_SHARE.symbol = SOLD_TRANSACTIONS.symbol) costSelect
+    ON ownsSelect.login = costSelect.login AND ownsSelect.symbol = costSelect.symbol;
 
 CREATE OR REPLACE VIEW SOLD_TRANSACTIONS    --done
     AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
@@ -566,8 +488,134 @@ CREATE OR REPLACE VIEW MAX_ALLOCATIONS  --done
 CREATE OR REPLACE VIEW RECENT_ALLOCATIONS   --done
     AS SELECT login, MAX(allocation_no) AS Allocation_No_Order
     FROM ALLOCATION GROUP BY login;
+
+COMMIT;
 -------------------------------------------------------------------------------
                             --END VIEW CREATION--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+                            --START PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)  --done
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance - amountToSubtract
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT) --done
+    AS Old_Balance FLOAT;
+    BEGIN
+        SELECT balance into Old_Balance 
+        FROM CUSTOMER WHERE customerId = login;
+        UPDATE CUSTOMER 
+            SET balance = Old_Balance + amountToAdd
+            WHERE login = customerID;
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNewPurchase(customerID IN VARCHAR2, symbol IN VARCHAR2, numShares IN NUMBER, price IN FLOAT) --done
+    AS
+        purchaseAmount float;
+        maxTransID number;
+    BEGIN
+        purchaseAmount := (numShares * prices);
+        SELECT MAX(trans_id) INTO maxTransID
+        FROM TRXLOG;
+        INSERT INTO TRXLOG VALUES(maxTransID + 1, customerID, symbol, current_date, 'buy', numShares, price, purchaseAmount);
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNewDeposit(customerID IN VARCHAR2, depositAmount IN FLOAT) --done
+    AS
+        maxTransID number;
+    BEGIN
+        SELECT MAX(trans_id) INTO maxTransID
+        FROM TRXLOG;
+        INSERT INTO TRXLOG VALUES(maxTransID + 1, customerID, NULL, current_date, 'deposit', NULL, NULL, depositAmount);
+    END;
+/
+
+CREATE OR REPLACE PROCEDURE UPDATE_TRANSACTIONS(maxTransID IN NUMBER, customerID IN VARCHAR2, updateAmount IN FLOAT, depositDate IN DATE) --TO DO
+    AS
+        current_balance NUMBER;
+        num_shares NUMBER;
+        share_price NUMBER;
+        alloc_no NUMBER;
+        buy_these NUMBER;
+        current_percent FLOAT;
+        sym VARCHAR2(10);
+
+    BEGIN
+        addToBalance(customerID, updateAmount);
+        SELECT alloc_no INTO alloc_no 
+            FROM RECENT_ALLOCATIONS 
+            WHERE login = customerID;
+        SELECT COUNT(symbol) INTO buy_these 
+            FROM PREFERS 
+            WHERE allocation_no = alloc_no;
+        SELECT balance INTO current_balance 
+            FROM CUSTOMER 
+            WHERE login = customerID;
+        FOR counter IN 1..buy_these
+        LOOP
+            SELECT percentage, symbol INTO current_percent, sym
+            FROM(
+	                SELECT percentage, symbol, rownum AS current_row
+	                FROM PREFERS
+	                WHERE allocation_no = alloc_no
+	            )
+            WHERE current_row = counter;
+            SELECT price into share_price 
+                FROM CLOSINGPRICE 
+                WHERE symbol = sym AND p_date = depositDate;
+            shares := floor(bal*percent/sharePrice);
+            INSERT INTO TRXLOG 
+                VAlUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, num_shares * share_price);
+        END LOOP;
+    END;
+/
+-------------------------------------------------------------------------------
+                            --END PROCEDURE CREATION--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+                            --START TRIGGER CREATION--
+-------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER CHECK_DEPOSIT --done
+    BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
+    ON TRXLOG
+    FOR EACH ROW
+    BEGIN
+        IF :new.action LIKE 'deposit' 
+            THEN UPDATE_TRANSACTIONS(:new.trans_id, :new.login, :new.amount, :new:t_date);
+        END IF;
+    End;
+/
+
+CREATE OR REPLACE TRIGGER BALANCE_UPDATE    --done
+    BEFORE INSERT
+    ON TRXLOG
+    FOR EACH ROW   
+    BEGIN
+        IF :new.action LIKE 'sell' 
+            THEN subtractFromBalance(:new.login, :new.amount)
+        END IF;
+        IF :new.action LIKE 'buy' 
+            THEN addToBalance(:new.login, :new.amount);
+        END IF;
+    END;
+/
+
+COMMIT;
+-------------------------------------------------------------------------------
+                            --END TRIGGER CREATION--
 -------------------------------------------------------------------------------
 
 --Last commit for good measure, purge recyclebin as well
