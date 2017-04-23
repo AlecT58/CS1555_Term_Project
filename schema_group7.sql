@@ -571,9 +571,9 @@ CREATE OR REPLACE PROCEDURE UPDATE_TRANSACTIONS(maxTransID IN NUMBER, customerID
             SELECT price into share_price 
                 FROM CLOSINGPRICE 
                 WHERE symbol = sym AND p_date = depositDate;
-            shares := floor(bal * percent / sharePrice);
+            num_shares := floor(current_balance * current_percent / sharePrice);
             INSERT INTO TRXLOG 
-                VALUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, num_shares * share_price);
+                VALUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, (num_shares * share_price));
         END LOOP;
     END;
 /
@@ -593,7 +593,7 @@ CREATE OR REPLACE TRIGGER CHECK_DEPOSIT --done
         IF :new.action LIKE 'deposit' 
             THEN UPDATE_TRANSACTIONS(:new.trans_id, :new.login, :new.amount, :new:t_date);
         END IF;
-    End;
+    END;
 /
 
 CREATE OR REPLACE TRIGGER BALANCE_UPDATE    --done
