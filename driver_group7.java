@@ -660,17 +660,73 @@ public class driver_group7
         prepStatement.setFloat(7, price);
         prepStatement.setFloat(8, toSell * price);
         prepStatement.executeUpdate();
-
         updateOwnedShares(userName, symbol, toSell, false);
 
         connection.commit();
         return true;
      }
 
-     public static boolean invest(String userName) throws SQLException
-     {
-         return false;
-     }
+    //done
+    public static boolean invest(String userName) throws SQLException
+    {
+        Scanner in = new Scanner(System.in);
+        int maxTrans = getMaxTransaction() + 1;
+		Date now = getMutualDate();
+        int alloc_id = 0;
+        String sym = "";
+		float percent = 0;
+		int total = 0;
+		int numshares = 0;
+		
+        System.out.println("How much would you like to deposit?");
+		float amount = in.nextFloat();
+
+		if(amount <= 0)
+		{
+			System.out.println("Cannot deposit less than or equal to 0. Please try again.");
+			return false;
+		}
+
+		query = "INSERT INTO TRXLOG (trans_id, login, t_date, action, amount) VALUES (?,?,?,?,?)";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setInt(1, maxTrans);
+		prepStatement.setString(2, userName);
+		prepStatement.setString(3,  dateAsString(now));
+		prepStatement.setString(4, "deposit");
+		prepStatement.setFloat(5, amount);
+        prepStatement.executeUpdate();
+
+		query = "SELECT alloc_no FROM RecentAllocations WHERE login = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setString(1, userName);
+		resultSet = prepStatement.executeQuery();
+		
+        boolean hasMore = true;
+		while(resultSet.next())
+		{
+			hasMore = false;
+			alloc_id = resultSet.getInt(1);
+		}
+		if(hasMore)
+			return true;
+		
+		query = "SELECT symbol, percentage FROM PREFERS WHERE allocation_no = ?";
+		prepStatement = connection.prepareStatement(query);
+		prepStatement.setInt(1, alloc_id);
+		resultSet2 = prepStatement.executeQuery();
+		while(resultSet2.next())
+		{
+			sym = resultSet2.getString(1);
+			percent = resultSet2.getFloat(2);
+			total = Math.round(percent * amount);
+			numshares = (int)Math.floor(total / getFundPrice(sym, now));
+			updateOwnedShares(userName, sym, numshares, true);
+        }
+		
+		connection.commit();
+		return true;
+        
+    }
 
     //done
     public static boolean buyShares(String userName) throws SQLException
