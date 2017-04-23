@@ -52,7 +52,7 @@ CREATE TABLE CUSTOMER
     password VARCHAR2(10) NOT NULL,
     balance FLOAT NOT NULL,
     CONSTRAINT customer_pk
-        PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE
+        PRIMARY KEY (login) INITIALLY IMMEDIATE DEFERRABLE,
     CONSTRAINT balance_not_negative     
         CHECK (balance >= 0)
 );
@@ -446,36 +446,33 @@ CREATE OR REPLACE VIEW BROWSE_FUNDS --done
     AS SELECT symbol, name, description, category, price, p_date
     FROM MUTUALFUND NATURAL JOIN CLOSINGPRICE;
 
+CREATE OR REPLACE VIEW COST_BY_SHARE    --done
+    AS SELECT login, symbol, SUM(amount) AS Total_Cost
+    FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
+
+CREATE OR REPLACE VIEW SOLD_TRANSACTIONS    --done
+    AS SELECT login, symbol, SUM(amount) AS Total_Sales
+    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
+
 CREATE OR REPLACE VIEW RECENT_PRICES --done
-    AS SELECT *
-    FROM 
-        (SELECT firstClose.symbol, firstClose.price, firstClose.maxD 
-        FROM CLOSINGPRICE firstClose
+AS SELECT *
+    FROM (SELECT first_close.symbol, first_close.price, second_close.newest_date FROM CLOSINGPRICE first_close
     JOIN
-        (SELECT symbol, max(p_date) as maxD 
-            FROM CLOSINGPRICE
-            GROUP BY symbol) secondClose
-    ON firstClose.symbol = secondClose.symbol AND secondClose.maxD = firstClose.p_date);
+        (SELECT symbol, max(p_date) as newest_date FROM CLOSINGPRICE
+            GROUP BY symbol) second_close
+    ON first_close.symbol = second_close.symbol AND second_close.newest_date = first_close.p_date);
 
 CREATE OR REPLACE VIEW PORTFOLIO --done
     AS 
-    SELECT ownsSelect.login, ownsSelect.symbol, ownsSelect.price, ownsSelect.shares, coalesce(costSelect.Amount_Per_Group, 0) as Cost_Values, coalesce(costSelect.Total_Sales_Made, 0) as Sales_Values
+    SELECT ownsSelect.login, ownsSelect.symbol, ownsSelect.price, ownsSelect.shares, coalesce(costSelect.Total_Cost, 0) as Cost_Values, coalesce(costSelect.Total_Sales, 0) as Sales_Values
     FROM 
         (SELECT * FROM OWNS NATURAL JOIN RECENT_PRICES) ownsSelect
     LEFT JOIN
-        (SELECT COST_BY_SHARE.login, COST_BY_SHARE.symbol, COST_BY_SHARE.Amount_Per_Group, COST_BY_SHARE.Total_Sales_Made
+        (SELECT COST_BY_SHARE.login, COST_BY_SHARE.symbol, COST_BY_SHARE.Total_Cost, SOLD_TRANSACTIONS.Total_Sales
 	    FROM COST_BY_SHARE
 	        LEFT JOIN SOLD_TRANSACTIONS 
-            ON COST_BY_SHARE.login = SOLD_TRANSACTIONS .login AND COST_BY_SHARE.symbol = SOLD_TRANSACTIONS.symbol) costSelect
+            ON COST_BY_SHARE.login = SOLD_TRANSACTIONS.login AND COST_BY_SHARE.symbol = SOLD_TRANSACTIONS.symbol) costSelect
     ON ownsSelect.login = costSelect.login AND ownsSelect.symbol = costSelect.symbol;
-
-CREATE OR REPLACE VIEW SOLD_TRANSACTIONS    --done
-    AS SELECT login, symbol, SUM(amount) AS Total_Sales_Made
-    FROM TRXLOG WHERE action = 'sell' GROUP BY login, symbol;
-
-CREATE OR REPLACE VIEW COST_BY_SHARE    --done
-    AS SELECT login, symbol, SUM(amount) AS Amount_Per_Group
-    FROM TRXLOG WHERE action = 'buy' GROUP BY login, symbol;
 
 CREATE OR REPLACE VIEW MAX_TRANSACTIONS --done
     AS SELECT MAX(trans_id) AS Trans_ID_Order
@@ -576,7 +573,7 @@ CREATE OR REPLACE PROCEDURE UPDATE_TRANSACTIONS(maxTransID IN NUMBER, customerID
                 WHERE symbol = sym AND p_date = depositDate;
             shares := floor(bal*percent/sharePrice);
             INSERT INTO TRXLOG 
-                VAlUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, num_shares * share_price);
+                VALUES(maxTransID + counter, customerID, sym, depositDate, 'buy', num_shares, share_price, num_shares * share_price);
         END LOOP;
     END;
 /
@@ -605,7 +602,7 @@ CREATE OR REPLACE TRIGGER BALANCE_UPDATE    --done
     FOR EACH ROW   
     BEGIN
         IF :new.action LIKE 'sell' 
-            THEN subtractFromBalance(:new.login, :new.amount)
+            THEN subtractFromBalance(:new.login, :new.amount);
         END IF;
         IF :new.action LIKE 'buy' 
             THEN addToBalance(:new.login, :new.amount);

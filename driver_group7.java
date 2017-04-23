@@ -17,22 +17,21 @@ public class driver_group7
 	static ResultSet resultSet2;
 	static PreparedStatement prepStatement;
 	static String query;
-	static SimpleDateFormat df;
+	static SimpleDateFormat dateformat = new SimpleDateFormat("dd-MMM-yyyy");
 
     public static void main(String[] args) throws SQLException 
     {
         String dbUsername = "abt22";
         String dbPassword = "3943128";
-        SimpleDateFormat currentDate = new SimpleDateFormat("dd-MMM-yyyy");
 
         try
         {
-            // DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
-            // String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-            // connection = DriverManager.getConnection(url, dbUsername, dbPassword); 
-            // statement = connection.createStatement();
-            // connection.setAutoCommit(false); 
-            // connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+            String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass";
+            connection = DriverManager.getConnection(url, dbUsername, dbPassword); 
+            statement = connection.createStatement();
+            connection.setAutoCommit(false); 
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 
             Scanner in = new Scanner(System.in);
             int userChoice = -1;
@@ -107,7 +106,7 @@ public class driver_group7
                         switch(userChoice)
                         {
                             case 0:
-                                System.out.println("\nExiting administrative options...");
+                                System.out.println("\nGood bye, " + userName + "!");
                                 start = false;
                                 break;
                             case 1:
@@ -146,7 +145,7 @@ public class driver_group7
                         switch(userChoice)
                         {
                             case 0:
-                                System.out.println("\nExiting administrative options...");
+                                System.out.println("\nGood bye, " + userName + "!");
                                 start = false;
                                 break;
                             case 1:
@@ -214,14 +213,14 @@ public class driver_group7
         String email = "";
         boolean admin = false;
 
-        System.out.println("You will be prompted for the information for the new user. \nNote: If an entered value is longer in length than requested, it will be truncated.");
+        System.out.println("\nYou will be prompted for the information for the new user. \nNote: If an entered value is longer in length than requested, it will be truncated.");
         
-        System.out.print("Enter the username for the new user (20 characters): ");
+        System.out.print("\nEnter the username for the new user (20 characters): ");
         username = in.nextLine();
 
         if(!nameAvailable(username))
         {
-            System.out.println("Error. Username already in use. Please try another name.");
+            System.out.println("\nError. Username already in use. Please try another name.");
             return false;
         }
 
@@ -229,7 +228,7 @@ public class driver_group7
         password = in.nextLine();
 
         System.out.print("\nIs the new user an admin? (Y for yes, other for no): ");
-        if(in.nextLine().equalIgnoreCase("Y"))
+        if(in.nextLine().equalsIgnoreCase("Y"))
             admin = true;
 
         System.out.print("\nEnter the name for the new user (20 characters): ");
@@ -260,7 +259,7 @@ public class driver_group7
             prepStatement.setString(2, name); 
             prepStatement.setString(3, email); 
             prepStatement.setString(4, address); 
-            prepStatement.setString(5, pass); 
+            prepStatement.setString(5, password); 
             prepStatement.setDouble(6, 0.0);
             prepStatement.executeUpdate();
         }
@@ -285,7 +284,7 @@ public class driver_group7
             String symbol = resultSet.getString(1);
             float oldPrice = resultSet.getFloat(2);
             
-            System.out.println("Here is the current price of mutual fund with symbol " + symbol + ":" + oldPrice);
+            System.out.println("\nHere is the current price of mutual fund with symbol " + symbol + ":" + oldPrice);
             System.out.print("Enter the new price: ");
             float newPrice = in.nextFloat();
 
@@ -361,18 +360,18 @@ public class driver_group7
     public static boolean updateTime() throws SQLException
     {
         Scanner in = new Scanner(System.in);
-        System.out.println("The current date is " + getMutualDate());
+        System.out.println("\nThe current date is " + getMutualDate());
         
         Date current = getMutualDate();
-        System.out.print("Enter the new year (4 digits): ");
+        System.out.print("\nEnter the new year (4 digits): ");
         int year = in.nextInt();
         in.nextLine();
 
-        System.out.print("Enter the new month (1-2 digits, 1 to 12 only): ");
+        System.out.print("\nEnter the new month (1-2 digits, 1 to 12 only): ");
         int month = in.nextInt();
         in.nextLine();
 
-        System.out.print("Enter the new day (1-2 digits, 1 to 31 only): ");
+        System.out.print("\nEnter the new day (1-2 digits, 1 to 31 only): ");
         int day = in.nextInt();
         in.nextLine();
 
@@ -421,11 +420,11 @@ public class driver_group7
     {
         Scanner in = new Scanner(System.in);
 
-        System.out.print("How many months of statsitics would you like to view? ");
+        System.out.print("\nHow many months of statsitics would you like to view? ");
         int numMonths = in.nextInt();
         in.nextLine();
 
-        System.out.println("How many rows or data would you like to view for the past " + numMonths + " ? ");
+        System.out.println("\nHow many rows or data would you like to view for the past " + numMonths + " months? ");
         int numRows = in.nextInt();
         in.nextLine();
 
@@ -436,31 +435,31 @@ public class driver_group7
 
         query = "SELECT * FROM (Select category, sum(num_shares) FROM SoldShares WHERE t_date >= ?  GROUP BY category ORDER BY sum(num_shares) desc) WHERE rownum <= ?";
         prepStatement = connection.prepareStatement(query);
-		prepStatement.setString(1, df.format(cal.getTime()));
+		prepStatement.setString(1, dateformat.format(cal.getTime()));
 		prepStatement.setInt(2, numRows);
 		resultSet = prepStatement.executeQuery();
 
         System.out.println("\n\t\tDISPLAYING STATISTICS FOR THE LAST " + numMonths + " MONTHS");
         System.out.println("Top " + numRows + " Highest Volume Categories");
 		
-        System.out.printf("%-10S %-10S%n", "CATEGORY", "SHARES");
+        System.out.printf("%-15S %-15S%n", "CATEGORY", "SHARES");
 		while(resultSet.next()) 
         {
-			System.out.printf("%-10s %-10S%n", resultSet.getString(1), resultSet.getInt(2));
+			System.out.printf("%-15s %-15S%n", resultSet.getString(1), resultSet.getInt(2));
 		}
 		
 		query = "SELECT * FROM (SELECT login, sum(amount) FROM TRXLOG WHERE action = 'buy' AND t_date >= ? GROUP BY login ORDER BY sum(amount) desc) WHERE rownum <= ?";		
 		prepStatement = connection.prepareStatement(query);
-		prepStatement.setString(1, df.format(now.getTime()));
+		prepStatement.setString(1, dateformat.format(now.getTime()));
 		prepStatement.setInt(2, numRows);
 		resultSet = prepStatement.executeQuery();
 
         System.out.println("\nTop " + numRows + " Investors");
 
-		System.out.printf("%-10S %-10S%n", "USER", "AMOUNT");
+		System.out.printf("%-15S %-15S%n", "USER", "AMOUNT");
 		while(resultSet.next()) 
         {
-			System.out.printf("%-10s %-10S%n", resultSet.getString(1), resultSet.getDouble(2));
+			System.out.printf("%-15s %-15S%n", resultSet.getString(1), resultSet.getDouble(2));
 		}
 
 		connection.commit();
@@ -479,7 +478,7 @@ public class driver_group7
         Scanner in = new Scanner(System.in);
         String userCategory = "";
         
-        System.out.println("Select an option \n1.) View All Funds \n2.) View by Categories");
+        System.out.println("\nSelect an option \n1.)View All Funds \n2.)View by Categories");
         System.out.print("Your choice: ");
         int option = in.nextInt();
         in.nextLine();
@@ -509,7 +508,7 @@ public class driver_group7
         int orderBy = in.nextInt();
         in.nextLine();
 
-        System.out.printf("%30S %10S %40S %20S %10S%n", "Name", "Symbol", "Description", "Category", "Price");
+        System.out.printf("%35S %15S %45S %25S %15S%n", "Name", "Symbol", "Description", "Category", "Price");
 
         if(orderBy == 1)
         {
@@ -549,7 +548,7 @@ public class driver_group7
 
         while(resultSet.next())
         {
-            System.out.printf("%30S %10S %40S %20S %10S%n",resultSet.getString(2),resultSet.getString(1),resultSet.getString(3),resultSet.getString(4),resultSet.getFloat(5));
+            System.out.printf("%35S %15S %45S %25S %15S%n",resultSet.getString(2),resultSet.getString(1),resultSet.getString(3),resultSet.getString(4),resultSet.getFloat(5));
         }
 
         return true;
@@ -606,7 +605,7 @@ public class driver_group7
         prepStatement.setString(1,  userName);
         resultSet = prepStatement.executeQuery();
 
-        System.out.println("Here is a list of the share you can sell:");
+        System.out.println("\nHere is a list of the share you can sell:");
         System.out.printf("%5S %5S%n", "Symbol", "Shares");
 
         while(resultSet.next())
@@ -646,7 +645,7 @@ public class driver_group7
             return false;
         }
 
-        int max = findLatestTransaction();
+        int max = getMaxTransaction();
         String date = dateAsString(getMutualDate());
         float price = getFundPrice(symbol, getMutualDate());
 
@@ -981,7 +980,7 @@ public class driver_group7
     {
         query = "SELECT * FROM CUSTOMER WHERE login = ?";
 		prepStatement = connection.prepareStatement(query);
-		prepStatement.setString(1, login);
+		prepStatement.setString(1, username);
 		resultSet = prepStatement.executeQuery();
 
 		while (resultSet.next())
@@ -992,7 +991,7 @@ public class driver_group7
 		
 		query = "SELECT * FROM ADMINISTRATOR WHERE login = ?";
 		prepStatement = connection.prepareStatement(query);
-		prepStatement.setString(1, login);
+		prepStatement.setString(1, username);
 		resultSet = prepStatement.executeQuery();
 	
         while (resultSet.next())
@@ -1004,7 +1003,6 @@ public class driver_group7
 		connection.commit();
         return true;	
     }
-
     /*
      * END HELPER FUNCTIONS
      */
