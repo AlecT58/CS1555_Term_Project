@@ -438,12 +438,12 @@ COMMIT;
                             --START TRIGGER CREATION--
 -------------------------------------------------------------------------------
 Create or replace trigger OnDepositTrx
-BEFORE INSERT    --should fire before because we don't want to add bad data -Alec
+BEFORE INSERT    
 On TRXLOG
 For Each Row
 Begin
-	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
-	where symbol = symbol -- idea is here. will do later
+	Insert Into MUTUALFUND()
+	where symbol = symbol 
 	
 	
 End;
@@ -570,111 +570,6 @@ CREATE OR REPLACE VIEW RECENT_ALLOCATIONS   --done
                             --END VIEW CREATION--
 -------------------------------------------------------------------------------
 
-<<<<<<< HEAD
--------------------------------------------------------------------------------
-                        --START PROCEDURE/FUNCTION CREATION--
--------------------------------------------------------------------------------
-CREATE OR REPLACE PROCEDURE subtractFromBalance(customerID IN VARCHAR2, amountToSubtract IN FLOAT)
-    AS Old_Balance FLOAT;
-    BEGIN
-        SELECT balance into Old_Balance 
-        FROM CUSTOMER WHERE customerId = login;
-        UPDATE CUSTOMER 
-            SET balance = Old_Balance - amountToSubtract
-            WHERE login = customerID;
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE addToBalance(customerID IN VARCHAR2, amountToAdd IN FLOAT)
-    AS Old_Balance FLOAT;
-    BEGIN
-        SELECT balance into Old_Balance 
-        FROM CUSTOMER WHERE customerId = login;
-        UPDATE CUSTOMER 
-            SET balance = Old_Balance + amountToAdd
-            WHERE login = customerID;
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE getReturns(numShares IN NUMBER, sharePrice IN FLOAT) RETURN NUMBER
-    AS
-    BEGIN
-        RETURN(numShares * sharePrice);
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE insertNewDeposit(customerID IN VARCHAR2, amountDeposit IN FLOAT)
-    AS ID NUMBER;
-    BEGIN
-        SELECT MAX(trans_id) INTO ID --highest ID == 1 less than our new ID
-        FROM TRXLOG;
-        INSERT INTO TRXLOG VALUES(ID + 1, customerID, NULL, current_date, 'deposit', NULL, NULL, amountDeposit);
-    END;
-/
-
-CREATE OR REPLACE PROCEDURE insertNewBuy(customerID IN VARCHAR2, symbol IN VARCHAR2, numShares IN NUMBER, sharePrice IN FLOAT)
-    AS total number;
-       ID number;
-    BEGIN
-        amount := getReturns(numShares, sharePrice);
-        SELECT MAX(trans_id) INTO ID --highest ID == 1 less than our new ID
-        FROM TRXLOG;
-        INSERT INTO TRXLOG VALUES(ID + 1, customerID, symbol, current_date, 'buy', numShares, sharePrice, amountDeposit);
-    END;
-/
-
---Still need procedures to: buy a new transaction based on user input, 
--------------------------------------------------------------------------------
-                        --END PROCEDURE/FUNCTION CREATION--
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-                            --START TRIGGER CREATION--
--------------------------------------------------------------------------------
-
-Create or replace trigger OnDepositTrx
-BEFORE INSERT   
-On TRXLOG
-For Each Row
-Begin
-	Insert Into MUTUALFUND()--Insert into mutual fund, right? Not sure--
-	where symbol = symbol -- idea is here. will do later
-	
-	
-End;
-/
-*
-
---Trigger that will make sure the balance will be updated properly after buying or selling
-CREATE OR REPLACE TRIGGER BALANCE_UPDATE_TRIG
-    BEFORE INSERT
-    ON TRXLOG
-    FOR EACH ROW   
-    BEGIN
-        --selling shares, need to subtract from balance; buying shares, add to balace
-        IF :new.action LIKE 'sell' addToBalance(:new.amount, :new.login); 
-        END IF;
-        IF :new.action LIKE 'buy' THEN THEN subtractFromBalance(:new.amount, :new.login); 
-    END;
-/
-/*
-CREATE OR REPLACE TRIGGER DEPOSIT_TRIG
-    BEFORE INSERT
-    ON TRXLOG
-    FOR EACH ROW
-    BEGIN
-        IF :new.action LIKE 'deposit' THEN --PROCEDURE TO BUY TRANSACTION GOES HERE
-        END IF;
-    END;
-/
-*/
-COMMIT;
--------------------------------------------------------------------------------
-                            --END TRIGGER CREATION--
--------------------------------------------------------------------------------
-
-=======
->>>>>>> refs/remotes/origin/master
 --Last commit for good measure, purge recyclebin as well
 COMMIT;
 PURGE RECYCLEBIN;
