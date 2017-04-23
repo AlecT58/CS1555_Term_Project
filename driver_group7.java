@@ -18,6 +18,7 @@ public class driver_group7
 	static PreparedStatement prepStatement;
 	static String query;
 	static SimpleDateFormat dateformat = new SimpleDateFormat("dd-MMM-yyyy");
+    static boolean debugMode = false;
 
     public static void main(String[] args) throws SQLException 
     {
@@ -40,15 +41,38 @@ public class driver_group7
 
             while (userChoice == -1)
             {
-                System.out.println("Please select an option:\n1)USER LOGIN\n2)ADMIN LOGIN\n");
+                System.out.println("Please select an option:\n1)USER LOGIN\n2)ADMIN LOGIN\n3)RUN STRESS TEST");
                 System.out.print("Your choice: ");
                 userChoice = in.nextInt();
                 in.nextLine();
 
-                if(userChoice < 1 || userChoice > 2)
+
+                if(userChoice < 1 || userChoice > 3)
                 {
                     System.out.println("\nError. Invalid entry. Please try again.\n");
                     userChoice = -1;
+                }
+            }
+
+            if(userChoice == 3)
+            {
+                debugMode = true;
+                runStressTest();
+                
+                while(true)
+                {
+                    System.out.print("CONTINUE TESTING (Y to continue)? ");
+                    if(!in.nextLine().equalsIgnoreCase("Y"))
+                    {
+                        System.out.print("ARE YOU SURE YOU WANT TO QUIT (Y to quit)? ");
+                        if(in.nextLine().equalsIgnoreCase("Y"))
+                        {
+                            statement.close();
+                            connection.close();
+                            System.exit(0);
+                        }
+                    }
+                    runStressTest();
                 }
             }
 
@@ -149,8 +173,9 @@ public class driver_group7
                         System.out.println("3 - Sell Shares");
                         System.out.println("4 - New Investment or Deposit");
                         System.out.println("5 - Buy New Shares");
-                        System.out.println("6 - Change Allocation Preferences");
-                        System.out.println("7 - View Your Portfolio");
+                        System.out.println("6 - Conditional Investment");
+                        System.out.println("7 - Change Allocation Preferences");
+                        System.out.println("8 - View Your Portfolio");
                         System.out.print("Your choice: ");
                         userChoice = in.nextInt();
 
@@ -176,9 +201,12 @@ public class driver_group7
                                 buyShares(userName);    //done
                                 break;
                             case 6:
-                                changePref(userName);   //NOT DONE
+                                conditionalInvestment(userName);   //NOT DONE
                                 break;
                             case 7:
+                                changePref(userName);   //NOT DONE
+                                break;
+                            case 8:
                                 viewPortfolio(userName);    //done
                                 break;
                             default:
@@ -195,6 +223,12 @@ public class driver_group7
                         in.nextLine();
                     }
                     System.out.println("\n\nThere was an error processing your request. Changes were rolled-back to maintain structure and accuracy. Please try again.");
+                    
+                    if(debugMode)
+                    {
+                        e.printStackTrace();
+                    }
+
                     connection.rollback();
                 }
             }
@@ -770,7 +804,7 @@ public class driver_group7
         System.out.print("Enter the symbol from the above list of the fund you would like to purchase: ");
         String symbol = in.nextLine();
 
-        query = "SELECT symbol from MUTUALFUND where symbol=?";
+        query = "SELECT symbol from MUTUALFUND where symbol = ?";
         prepStatement = connection.prepareStatement(query);
         prepStatement.setString(1, symbol);
         resultSet = prepStatement.executeQuery();
@@ -820,6 +854,13 @@ public class driver_group7
 
     public static boolean changePref(String userName) throws SQLException
     {
+        System.out.println("\nNot implemented\n");
+        return false;
+    }
+
+    public static boolean conditionalInvestment(String userName) throws SQLException
+    {
+        System.out.println("\nNot implemented\n");
         return false;
     }
 
@@ -1079,4 +1120,170 @@ public class driver_group7
     /*
      * END HELPER FUNCTIONS
      */
+
+    private static void runStressTest()
+    {
+        Scanner in = new Scanner(System.in);
+        boolean admin = false;
+        int userChoice = 0;
+        String userName = "";
+        String password = "";
+
+            try
+            {
+                while(true)
+                    {
+                        System.out.print("\nAre you an admin? (Y for yes) ");
+                        admin = in.nextLine().equalsIgnoreCase("Y");
+                        System.out.print("Enter your username: ");
+                        userName = in.nextLine();
+                        System.out.print("Enter your password: ");
+                        password = in.nextLine();
+
+                        if(!checkLogin(admin, userName, password))
+                        {
+                            System.out.println("\nIncorrect login. Please try again");
+                        }
+                        else if(!admin)
+                        {
+                            System.out.println("\nWelcome user " + userName + "!");
+                            break;
+                        }
+                        else if(admin)
+                        {
+                            System.out.println("\nWelcome administrator!");
+                            break;
+                        }
+                    }
+
+                    boolean start = true;
+                    boolean adminPriceUpdateDone = false;
+
+                    while(start)
+                    {
+                        connection.commit();
+                        try
+                        {
+                            if(admin)
+                            {
+                                System.out.println("\nSelect an option:");
+                                System.out.println("0 - Exit");
+                                System.out.println("1 - Add user to the database");
+                                System.out.println("2 - Update daily share prices (once per day)");
+                                System.out.println("3 - Add new mutual fund");
+                                System.out.println("4 - Update today's date/time information");
+                                System.out.println("5 - View statistics");
+                                System.out.print("Your choice: ");
+                                userChoice = in.nextInt();
+
+                                boolean updatedToday = false;
+                                switch(userChoice)
+                                {
+                                    case 0:
+                                        System.out.println("\nGood bye, " + userName + "!");
+                                        start = false;
+                                        break;
+                                    case 1:
+                                        if(addUser())
+                                            System.out.println("\nNEW USER ADDED"); 
+                                        break;
+                                    case 2:
+                                        if(!updatedToday && updatePrices())
+                                        {
+                                            System.out.println("\nPRICES UPDATED");
+                                            updatedToday = true;
+                                        }
+                                        else
+                                        {
+                                            System.out.println("\nERROR. PRICES CAN ONLY BE UPDATED ONCE A DAY");  
+                                        }
+                                        break;
+                                    case 3:
+                                        if(addFunds())
+                                            System.out.println("\nNEW FUNDS ADDED"); 
+                                        break;
+                                    case 4:
+                                        if(updateTime())
+                                            System.out.println("\nTIME UPDATED");      
+                                        break;
+                                    case 5:
+                                        viewStats();        
+                                        break;
+                                    default:
+                                        System.out.println("Error. Invalid option. Please try again.");
+                                }
+                            }
+                            else
+                            {
+                                System.out.println("\nSelect an option:");
+                                System.out.println("0 - Exit");
+                                System.out.println("1 - Browse Mutual Funds");
+                                System.out.println("2 - Search for Specific Funds");
+                                System.out.println("3 - Sell Shares");
+                                System.out.println("4 - New Investment or Deposit");
+                                System.out.println("5 - Buy New Shares");
+                                System.out.println("6 - Conditional Investment");
+                                System.out.println("7 - Change Allocation Preferences");
+                                System.out.println("8 - View Your Portfolio");
+                                System.out.print("Your choice: ");
+                                userChoice = in.nextInt();
+
+                                switch(userChoice)
+                                {
+                                    case 0:
+                                        System.out.println("\nGood bye, " + userName + "!");
+                                        start = false;
+                                        break;
+                                    case 1:
+                                        browseFunds();  //done
+                                        break;
+                                    case 2:
+                                        searchFunds();  //done
+                                        break;
+                                    case 3:
+                                        sellShares(userName);   //done
+                                    break;
+                                case 4:
+                                    invest(userName);   //done
+                                    break;
+                                case 5:
+                                    buyShares(userName);    //done
+                                    break;
+                                case 6:
+                                    conditionalInvestment(userName);   //NOT DONE
+                                    break;
+                                case 7:
+                                    changePref(userName);   //NOT DONE
+                                    break;
+                                case 8:
+                                    viewPortfolio(userName);    //done
+                                    break;
+                                default:
+                                    System.out.println("Error. Invalid option. Please try again.");
+                            }
+                        }
+            
+                    }
+                    catch(Exception e)
+                    {
+                        //most likely a bad user input, but we can just use this hack for now
+                        if(in.hasNextLine())
+                        {
+                            in.nextLine();
+                        }
+                        System.out.println("\n\nThere was an error processing your request. Changes were rolled-back to maintain structure and accuracy. Please try again.");
+                    
+                        e.printStackTrace();
+                    
+                        
+                        
+                        connection.rollback();
+                    }
+                }
+        }
+        catch(SQLException sql)
+        {
+            sql.printStackTrace();
+        }
+    }
 }
